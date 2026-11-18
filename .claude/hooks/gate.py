@@ -48,7 +48,9 @@ def main():
             sys.exit(0 if attempt >= MAX_ATTEMPTS else 2)
         sys.exit(0)
     base = (ROOT / ".claude" / "base").read_text().strip()
-    touched = {f for f in git("log", "--no-merges", "--format=", "--name-only", f"{base}..HEAD").splitlines() if f}
+    tips_file = ROOT / ".claude" / "contract-tips"  # contract commits merged in by the architect are not the agent's work
+    tips = ["^" + t for t in tips_file.read_text().split()] if tips_file.exists() else []
+    touched = {f for f in git("log", "--no-merges", "--format=", "--name-only", f"{base}..HEAD", *tips).splitlines() if f}
     if not touched:
         problems.append("no commits from you yet; finish your plan and commit")
     outside = sorted(f for f in touched if not any(fnmatch.fnmatch(f, p) for p in spec["write"]))

@@ -10,3 +10,4 @@
 .pytest_cache/
 .venv/
 __pycache__/
+.claude/contract-tips
