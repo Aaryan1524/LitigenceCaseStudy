@@ -37,7 +37,9 @@
     "wc",
     "cd",
     "head",
-    "tail"
+    "tail",
+    "cat",
+    "echo"
   ],
   "roles": {
     "api": {
