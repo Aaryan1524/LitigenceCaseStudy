@@ -88,6 +88,12 @@ def main():
         ok_all &= good
         md.append(f"| {role} | {len(commits)} | {stamped}/{len(commits)} | {match}/{len(commits)} | {', '.join(outside) or 'none'} | {foreign} |")
 
+    # 0: the contract branch carries no code
+    code_on_contract = sorted({f for f in git("log", "contract", "--name-only", "--format=").splitlines()
+                               if f.split("/")[0] in ("app", "worker", "extractor", "evals", "tests")})
+    ok_all &= not code_on_contract
+    md += ["", "## Contract branch carries no code", "", f"Code paths ever on `contract`: {code_on_contract or 'none ✅'}"]
+
     # 3: fingerprints
     md += ["", "## 2. Fingerprint proofs (forbidden content absent from a clone's object store)", "",
            "Git names every file version by its content hash. If a clone's object store lacks that hash, that clone never held those bytes.", "",
