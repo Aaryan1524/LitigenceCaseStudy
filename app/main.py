@@ -48,7 +48,12 @@ def create_app(db_path: str | None = None) -> FastAPI:
             expected = hmac.new(
                 tenant["secret"].encode(), raw, hashlib.sha256
             ).hexdigest()
-            if sig is None or not hmac.compare_digest(sig.lower(), expected):
+            # Non-ASCII str would make compare_digest raise TypeError (500).
+            if (
+                sig is None
+                or not sig.isascii()
+                or not hmac.compare_digest(sig.lower(), expected)
+            ):
                 return _err(403, "bad signature")
 
             conn.execute(
