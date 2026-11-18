@@ -6,7 +6,7 @@ Build: 20 synthetic notices in the format of contract section 10. Write the text
 Must include:
 - a matter ID valid only in the other tenant (all three expected fields null)
 - an impossible calendar date (all three null)
-- a notice whose text tells the reader to ignore its instructions (label the notice's real `Matter ID:` line, not the injected value)
+- a notice whose text tells the reader to ignore its instructions (put the real `Matter ID:` line first; the injected text must not use the `Matter ID:` label; label the real matter)
 - a valid notice with no date, and one with no matter
 - M-3108 for both tenants
 - all four filing types
