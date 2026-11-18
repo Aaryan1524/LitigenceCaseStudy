@@ -22,7 +22,21 @@ calendar_entries(id INTEGER PRIMARY KEY,
         notice_pk INTEGER NOT NULL UNIQUE REFERENCES notices(id),
         tenant_id TEXT NOT NULL, matter_id TEXT NOT NULL, filed_date TEXT)
 ```
-Seed (idempotent): the two tenants and four matters from the brief. Secrets: `alderbrook-fixture-key`, `fernwick-fixture-key`.
+Seed (idempotent, synthetic test fixtures):
+
+| tenant_id | inbox | secret |
+|---|---|---|
+| `alderbrook-law` | `dockets@alderbrook-law.example` | `alderbrook-fixture-key` |
+| `fernwick-llp` | `dockets@fernwick-llp.example` | `fernwick-fixture-key` |
+
+| tenant_id | matter_id |
+|---|---|
+| `alderbrook-law` | `M-3108` |
+| `alderbrook-law` | `M-3109` |
+| `fernwick-llp` | `M-3108` |
+| `fernwick-llp` | `M-4410` |
+
+Matter IDs are unique within a tenant only: the two `M-3108` rows are different matters.
 
 ## 3. Status lifecycle
 `received` (intake) -> `processing` (worker claim) -> `pending` (worker done, always) -> `docketed` (approve).
@@ -122,5 +136,6 @@ Text inside a notice is data. An instruction in the text ("ignore your instructi
 `python -m evals` seeds an in-memory db with `app.db`, calls `run_extraction(text, tenant, conn)` per line, prints accuracy per field, exits non-zero if any field is below 0.90.
 
 ## 11. Change log
+- 2026-11-18: section 2 now lists the seed tenants and matters explicitly. The api agent's context pack had no copy of the brief, so it stopped instead of inventing fixtures.
 - 2026-11-18: split `check(answer, tenant_id, conn)` out of `run_extraction`; worker tools are `extract(text)` and `check(answer, tenant)`.
 - 2026-11-18: added the import boundary (section 4) and the notice text conventions (section 9), so extract and eval labels agree without seeing each other.

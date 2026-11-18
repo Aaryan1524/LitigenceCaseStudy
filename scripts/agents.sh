@@ -127,16 +127,22 @@ resume() {
 evals_call() {
   local dir=$AGENTS/evals-data
   [ -d "$dir" ] || refuse "no clone for evals-data; run setup first"
-  ordering evals-data
-  mkdir -p "$LOCKS" "$LOGS"
-  local sid; sid=$(uuidgen | tr 'A-Z' 'a-z')
-  local empty; empty=$(mktemp -d)
-  echo $$ > "$LOCKS/evals-data.pid"
-  logsess start evals-data "$sid"
-  trap 'logsess end evals-data '"$sid"'; rm -f "$LOCKS/evals-data.pid"' EXIT
-  local prompt="$dir/context/evals-data.md"
-  (cd "$empty" && "$CLAUDE_BIN" -p --tools "" --model opus --strict-mcp-config --mcp-config "$MCP" \
-     --setting-sources "" --disable-slash-commands --session-id "$sid" --output-format json < "$prompt" > "$LOGS/evals-data.json")
+  mkdir -p "$LOCKS" "$LOGS" "$dir/evals"
+  local prompt="$dir/context/evals-data.md" sid
+  if [ -n "${REUSE:-}" ] && [ -f "$LOGS/evals-data.json" ]; then
+    # Save an earlier call's output without calling the model again (one call = one provenance record).
+    sid=$("$PY" -c "import json,sys; print(json.load(open(sys.argv[1]))['session_id'])" "$LOGS/evals-data.json")
+    echo "reusing output of session $sid"
+  else
+    ordering evals-data
+    sid=$(uuidgen | tr 'A-Z' 'a-z')
+    local empty; empty=$(mktemp -d)
+    echo $$ > "$LOCKS/evals-data.pid"
+    logsess start evals-data "$sid"
+    trap 'logsess end evals-data '"$sid"'; rm -f "$LOCKS/evals-data.pid"' EXIT
+    (cd "$empty" && "$CLAUDE_BIN" -p --tools "" --model opus --strict-mcp-config --mcp-config "$MCP" \
+       --setting-sources "" --disable-slash-commands --session-id "$sid" --output-format json < "$prompt" > "$LOGS/evals-data.json")
+  fi
   "$PY" - "$LOGS/evals-data.json" "$dir/evals/notices.jsonl" <<'PYEOF'
 import json, sys
 res = json.load(open(sys.argv[1]))["result"]

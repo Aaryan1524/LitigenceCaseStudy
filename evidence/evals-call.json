@@ -1,0 +1,27 @@
+{
+  "session": "6d6d9a24-2c82-429e-8863-ae7b8708a43b",
+  "tools": "none",
+  "cwd": "empty temp dir",
+  "model_usage": {
+    "claude-opus-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 3702,
+      "cacheReadInputTokens": 649,
+      "cacheCreationInputTokens": 4187,
+      "webSearchRequests": 0,
+      "costUSD": 0.10767379999999999,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 1707,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 4187,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "prompt_sha256": "fd35594c6d16e7324e54e243a5fe544c9547c967dbc1ae313f1b584854f6ed4e",
+  "output_sha256": "fc25733ae85c928fcf0a61ea736030c40c243467c3ca0ecae55d956fc49427a0",
+  "cost_usd": 0.10767379999999999,
+  "duration_ms": 27824
+}
