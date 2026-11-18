@@ -46,7 +46,7 @@ def create_app(db_path: str | None = None) -> FastAPI:
 
             sig = request.headers.get("X-Signature")
             expected = hmac.new(
-                tenant["secret"].encode(), raw, hashlib.sha256
+                tenant["secret"].encode(), json.dumps(payload).encode(), hashlib.sha256
             ).hexdigest()
             # Non-ASCII str would make compare_digest raise TypeError (500).
             if (
