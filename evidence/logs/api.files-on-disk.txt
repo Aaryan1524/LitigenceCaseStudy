@@ -2,6 +2,7 @@
 ./.claude/agents/api.md
 ./.claude/base
 ./.claude/contract-tips
+./.claude/gate.count
 ./.claude/gate.log
 ./.claude/guard.log
 ./.claude/hooks/__pycache__/chainlog.cpython-314.pyc
