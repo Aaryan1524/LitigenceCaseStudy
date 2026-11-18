@@ -61,27 +61,32 @@ def main():
     ok_all = True
 
     # 1 + 2: stamps and scope
-    md += ["## 1. Commit stamps and scope", "", "| Role | Own commits | Stamped | Session matches sessions.log | Files outside slice |", "|---|---|---|---|---|"]
+    md += ["## 1. Commit stamps and scope", "", "| Role | Own commits | Stamped | Session matches sessions.log | Files outside slice | Other roles' commits merged in |", "|---|---|---|---|---|---|"]
     for role in ROLES:
         if not git("rev-parse", "--verify", f"refs/heads/feat/{role}"):
             continue
         clone = AGENTS / role
         base = (clone / ".claude" / "base").read_text().strip() if (clone / ".claude" / "base").exists() else "main"
-        others = [f"^feat/{o}" for o in ROLES if o != role and git("rev-parse", "--verify", f"refs/heads/feat/{o}")]
-        commits = [c for c in git("rev-list", "--no-merges", f"{base}..feat/{role}", "^contract", *others).split() if c]
         role_sessions = {s["session"] for s in sess if s["role"] == role}
+        commits, foreign = [], 0
         stamped = match = 0
-        for c in commits:
+        for c in [c for c in git("rev-list", "--no-merges", f"{base}..feat/{role}", "^contract").split() if c]:
             msg = git("log", "-1", "--format=%B", c)
             r = next((l.split(":", 1)[1].strip() for l in msg.splitlines() if l.startswith("Agent-Role:")), None)
             s = next((l.split(":", 1)[1].strip() for l in msg.splitlines() if l.startswith("Agent-Session:")), None)
+            if r and r not in (role, "architect"):
+                foreign += 1  # another agent's stamped work, merged in by the architect (sync)
+                continue
+            commits.append(c)
             stamped += r == role
             match += s in role_sessions
-        touched = {f for f in git("log", "--no-merges", "--format=", "--name-only", f"{base}..feat/{role}", "^contract", *others).splitlines() if f}
+        touched = set()
+        for c in commits:
+            touched |= {f for f in git("show", "--format=", "--name-only", c).splitlines() if f}
         outside = sorted(f for f in touched if not any(fnmatch.fnmatch(f, p) for p in CFG["roles"][role]["write"]))
         good = stamped == len(commits) and match == len(commits) and not outside
         ok_all &= good
-        md.append(f"| {role} | {len(commits)} | {stamped}/{len(commits)} | {match}/{len(commits)} | {', '.join(outside) or 'none'} |")
+        md.append(f"| {role} | {len(commits)} | {stamped}/{len(commits)} | {match}/{len(commits)} | {', '.join(outside) or 'none'} | {foreign} |")
 
     # 3: fingerprints
     md += ["", "## 2. Fingerprint proofs (forbidden content absent from a clone's object store)", "",
