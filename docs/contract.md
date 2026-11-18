@@ -89,7 +89,7 @@ WHERE id = (SELECT id FROM notices WHERE status='received' ORDER BY id LIMIT 1)
 RETURNING id, tenant_id, text
 ```
 No row returned means nothing to claim; loop ends. Write the result with `UPDATE ... SET status='pending' WHERE id=? AND status='processing'`.
-If `run_extraction` raises `sqlite3.Error`, `run_once` writes nothing for that notice (it stays `processing`, the out-of-scope crash case), prints the notice id and error to stderr, and stops the run with a non-zero exit from `python -m worker --once`. A database error must never be stored as an invalid answer.
+If `run_extraction` raises `sqlite3.Error`, `run_once` writes nothing for that notice (it stays `processing`, the out-of-scope crash case), prints the notice id and error to stderr, and re-raises the `sqlite3.Error` (processing stops). `python -m worker --once` catches it and exits with status 1. A database error must never be stored as an invalid answer.
 
 ## 7. HTTP behaviour
 Intake `POST /webhooks/notices`, in this order, all before any write:
