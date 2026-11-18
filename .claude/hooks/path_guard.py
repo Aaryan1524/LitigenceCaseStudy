@@ -26,13 +26,13 @@ DENY_GIT = {"show", "cat-file", "checkout", "switch", "restore", "grep", "worktr
             "ls-tree", "ls-files", "rev-list", "archive", "clone", "config", "submodule", "update-index"}
 
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import chainlog  # noqa: E402
+
+
 def log(entry):
-    entry["ts"] = time.strftime("%Y-%m-%dT%H:%M:%S")
-    try:
-        with open(LOG, "a") as f:
-            f.write(json.dumps(entry) + "\n")
-    except OSError:
-        pass
+    entry["session"] = os.environ.get("AGENT_SESSION", "")
+    chainlog.append(LOG, entry)
 
 
 def decide(decision, reason, entry):

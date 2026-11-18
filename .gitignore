@@ -1,9 +1,12 @@
 *.db
-*.db-wal
 *.db-shm
+*.db-wal
+.claude/base
+.claude/gate.count
+.claude/gate.log
 .claude/guard.log
 .claude/role
 .claude/settings.local.json
+.pytest_cache/
 .venv/
 __pycache__/
-.pytest_cache/
