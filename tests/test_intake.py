@@ -76,6 +76,29 @@ def test_missing_signature_403_and_no_row(post_notice, rows):
     assert count(rows) == 0
 
 
+@pytest.mark.parametrize(
+    "raw_sig",
+    [
+        b"\xe9abc",
+        EXAMPLE_SIG.encode() + b"\xe9",                 # valid signature plus a non-ASCII byte
+        EXAMPLE_SIG[:-1].encode() + b"\xe9",            # right length, last char non-ASCII
+        b"\xff" * 64,
+    ],
+    ids=["e9abc", "valid-plus-e9", "same-length", "all-ff"],
+)
+def test_non_ascii_signature_header_403_and_no_row(post_notice, rows, raw_sig):
+    # Contract section 7 row 3 (amended): a non-ASCII X-Signature is a 403, not a 500.
+    r = post_notice(EXAMPLE_BODY, raw_sig)
+    assert r.status_code == 403, r.text
+    assert count(rows) == 0
+
+
+def test_non_ascii_signature_then_valid_delivery_still_accepted(post_notice, rows):
+    assert post_notice(EXAMPLE_BODY, b"\xe9abc").status_code == 403
+    assert post_notice(EXAMPLE_BODY, EXAMPLE_SIG).status_code == 200
+    assert count(rows) == 1
+
+
 def test_signature_checked_over_raw_bytes_not_reserialised_json(post_notice, rows):
     # Same JSON object, different bytes: the signature over the original bytes
     # must not validate the reformatted body.
