@@ -256,6 +256,111 @@ def test_worker_raising_extractor_does_not_stop_the_run(db, add_notice, rows):
     ]
 
 
+# ------------------------------------- database errors propagate (amended 4, 6)
+
+DB_ERROR = "synthetic disk I/O failure"
+
+
+@pytest.fixture
+def broken_matter_lookup(monkeypatch):
+    """Make app.db.matter_ids raise sqlite3.OperationalError. Also patches a name
+    imported directly into worker.checks, so the test does not depend on how
+    checks binds it (contract: checks uses app.db.matter_ids)."""
+    import sqlite3
+
+    import app.db
+    import worker.checks
+
+    calls = []
+
+    def boom(conn, tenant_id):
+        calls.append(tenant_id)
+        raise sqlite3.OperationalError(DB_ERROR)
+
+    monkeypatch.setattr(app.db, "matter_ids", boom)
+    if hasattr(worker.checks, "matter_ids"):
+        monkeypatch.setattr(worker.checks, "matter_ids", boom)
+    return calls
+
+
+@pytest.mark.parametrize("tenant,matter", [(ALDER, "M-3108"), (FERN, "M-4410"),
+                                           (ALDER, "M-4410"), (ALDER, "M-9999")])
+def test_check_db_error_in_matter_lookup_propagates(conn, broken_matter_lookup, tenant, matter):
+    import sqlite3
+
+    from worker.checks import check
+
+    # A well-formed answer whose matter must be looked up: the lookup failure is
+    # a database error, not an invalid answer.
+    with pytest.raises(sqlite3.Error):
+        check(good(matter=matter), tenant, conn)
+    assert broken_matter_lookup, "check did not use app.db.matter_ids"
+
+
+def test_run_extraction_db_error_propagates_not_treated_as_extractor_error(
+        conn, broken_matter_lookup):
+    import sqlite3
+
+    from worker.checks import run_extraction
+
+    with pytest.raises(sqlite3.Error):
+        run_extraction("Matter ID: M-3108.", ALDER, conn,
+                       extractor=RecordingExtractor(good(matter="M-3108")))
+
+
+def test_check_bad_answers_never_raise_on_healthy_db(conn):
+    from worker.checks import check
+
+    weird = [
+        good(matter={"M-3108": 1}),      # unhashable matter_id
+        good(matter={"M-3108"}),
+        good(ftype=["order"]),            # unhashable filing_type
+        good(date=["2026-10-29"]),
+        good(date=b"2026-10-29"),
+        good(matter=b"M-3108"),
+        object(),
+    ]
+    for answer in BAD_SHAPES + weird:
+        try:
+            result = check(answer, ALDER, conn)
+        except Exception as e:  # noqa: BLE001
+            pytest.fail(f"check raised {e!r} for bad answer {answer!r}")
+        assert_invalid(result)
+
+
+def test_run_once_db_error_raises_and_leaves_notice_processing(db, add_notice, rows,
+                                                               broken_matter_lookup):
+    import sqlite3
+
+    from worker.run import run_once
+
+    add_notice(ALDER, "N-1", text="Matter ID: M-3108. Order. Filed 2026-10-29.")
+    add_notice(ALDER, "N-2", text="second")
+    fake = RecordingExtractor(good(matter="M-3108"))
+    with pytest.raises(sqlite3.Error):
+        run_once(db, extractor=fake)
+    got = rows("SELECT notice_id, status, matter_id, filing_type, filed_date, needs_review"
+               " FROM notices ORDER BY id")
+    # First notice: claimed, nothing written (not stored as an invalid answer).
+    assert got[0] == {"notice_id": "N-1", "status": "processing", "matter_id": None,
+                      "filing_type": None, "filed_date": None, "needs_review": 0}
+    # Processing stops: the second notice is never claimed.
+    assert got[1] == {"notice_id": "N-2", "status": "received", "matter_id": None,
+                      "filing_type": None, "filed_date": None, "needs_review": 0}
+    assert fake.calls == ["Matter ID: M-3108. Order. Filed 2026-10-29."]
+
+
+def test_run_once_db_error_reported_on_stderr(db, add_notice, capsys, broken_matter_lookup):
+    import sqlite3
+
+    from worker.run import run_once
+
+    add_notice(ALDER, "N-1")
+    with pytest.raises(sqlite3.Error):
+        run_once(db, extractor=RecordingExtractor(good(matter="M-3108")))
+    assert DB_ERROR in capsys.readouterr().err
+
+
 # --------------------------------------------------------- two workers at once
 
 

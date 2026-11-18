@@ -141,7 +141,8 @@ def client(make_client):
 
 @pytest.fixture
 def post_notice(client):
-    """post_notice(body_bytes, signature=None|str) -> response."""
+    """post_notice(body_bytes, signature=None|str|bytes) -> response.
+    A bytes signature is sent as raw header bytes (for non-ASCII cases)."""
 
     def _post(body: bytes, signature=None, c=None):
         headers = {"Content-Type": "application/json"}
