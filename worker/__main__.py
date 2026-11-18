@@ -1,5 +1,6 @@
 """`python -m worker --once`: drain received notices, last line `processed <n>`."""
 import argparse
+import sqlite3
 import sys
 
 from worker.run import run_once
@@ -12,7 +13,11 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
     if not args.once:
         parser.error("only --once mode is supported")
-    n = run_once(args.db)
+    try:
+        n = run_once(args.db)
+    except sqlite3.Error:
+        # run_once already printed the notice id and error to stderr.
+        return 1
     print(f"processed {n}")
     return 0
 

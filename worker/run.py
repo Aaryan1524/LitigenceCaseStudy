@@ -1,4 +1,7 @@
 """Worker loop: atomic claim, shared check, finish (contract sections 3 and 6)."""
+import sqlite3
+import sys
+
 from app.db import connect
 from extractor import extract
 from worker.checks import Extractor, run_extraction
@@ -34,7 +37,12 @@ def run_once(db_path: str | None = None, extractor: Extractor = extract) -> int:
             row = _claim(conn)
             if row is None:
                 break
-            result = run_extraction(row["text"], row["tenant_id"], conn, extractor)
+            try:
+                result = run_extraction(row["text"], row["tenant_id"], conn, extractor)
+            except sqlite3.Error as exc:
+                # Contract 6: write nothing (notice stays 'processing'), report, stop.
+                print(f"worker: notice id={row['id']} database error: {exc!r}", file=sys.stderr)
+                raise
             conn.execute(
                 FINISH_SQL,
                 (
