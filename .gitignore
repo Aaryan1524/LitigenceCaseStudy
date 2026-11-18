@@ -1,0 +1,9 @@
+*.db
+*.db-wal
+*.db-shm
+.claude/guard.log
+.claude/role
+.claude/settings.local.json
+.venv/
+__pycache__/
+.pytest_cache/

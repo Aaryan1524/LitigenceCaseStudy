@@ -1,0 +1,170 @@
+{
+  "_doc": "Per-role allowlists. 'checkout' = sparse-checkout patterns (what exists on disk). 'read'/'write' = glob paths relative to the checkout root, enforced by .claude/hooks/path_guard.py. 'bash' = allowed command prefixes. Writes to protected paths are denied for every role.",
+  "protected": [
+    "CLAUDE.md",
+    "docs/**",
+    ".claude/**",
+    ".git/**",
+    "tasks/**",
+    "plans/**",
+    "parallel-filings-brief.md"
+  ],
+  "common_checkout": [
+    "/CLAUDE.md",
+    "/docs/",
+    "/parallel-filings-brief.md",
+    "/requirements.txt",
+    "/pytest.ini",
+    "/.gitignore",
+    "/.claude/settings.json",
+    "/.claude/agent-settings.json",
+    "/.claude/roles.json",
+    "/.claude/hooks/"
+  ],
+  "common_read": [
+    "CLAUDE.md",
+    "docs/**",
+    "parallel-filings-brief.md",
+    "requirements.txt",
+    "pytest.ini",
+    ".claude/role"
+  ],
+  "common_bash": [
+    "git status",
+    "git add",
+    "git commit",
+    "git diff",
+    "git log --oneline",
+    "ls",
+    "pwd",
+    "wc",
+    "python -m pytest",
+    "pytest"
+  ],
+  "roles": {
+    "api": {
+      "checkout": [
+        "/tasks/api.md",
+        "/plans/api.md",
+        "/app/"
+      ],
+      "read": [
+        "tasks/api.md",
+        "plans/api.md",
+        "app/**"
+      ],
+      "write": [
+        "app/**"
+      ],
+      "bash": [
+        "python",
+        "python3"
+      ]
+    },
+    "worker": {
+      "checkout": [
+        "/tasks/worker.md",
+        "/plans/worker.md",
+        "/worker/",
+        "/evals/__init__.py",
+        "/evals/__main__.py",
+        "/app/",
+        "/extractor/",
+        "/.claude/skills/worker-pipeline/"
+      ],
+      "read": [
+        "tasks/worker.md",
+        "plans/worker.md",
+        "worker/**",
+        "evals/__init__.py",
+        "evals/__main__.py",
+        "app/**",
+        "extractor/**",
+        ".claude/skills/worker-pipeline/**"
+      ],
+      "write": [
+        "worker/**",
+        "evals/__init__.py",
+        "evals/__main__.py"
+      ],
+      "bash": [
+        "python",
+        "python3",
+        "bash .claude/skills/worker-pipeline/scripts/",
+        "sqlite3"
+      ]
+    },
+    "extract": {
+      "checkout": [
+        "/tasks/extract.md",
+        "/plans/extract.md",
+        "/extractor/"
+      ],
+      "read": [
+        "tasks/extract.md",
+        "plans/extract.md",
+        "extractor/**"
+      ],
+      "write": [
+        "extractor/**"
+      ],
+      "bash": [
+        "python",
+        "python3"
+      ]
+    },
+    "evals-data": {
+      "checkout": [
+        "/tasks/evals-data.md",
+        "/plans/evals-data.md",
+        "/evals/notices.jsonl"
+      ],
+      "read": [
+        "tasks/evals-data.md",
+        "plans/evals-data.md",
+        "evals/notices.jsonl"
+      ],
+      "write": [
+        "evals/notices.jsonl"
+      ],
+      "bash": [
+        "python",
+        "python3"
+      ]
+    },
+    "tests": {
+      "checkout": [
+        "/tasks/tests.md",
+        "/plans/tests.md",
+        "/tests/"
+      ],
+      "read": [
+        "tasks/tests.md",
+        "plans/tests.md",
+        "tests/**"
+      ],
+      "write": [
+        "tests/**"
+      ],
+      "bash": [
+        "python",
+        "python3"
+      ]
+    },
+    "reviewer": {
+      "checkout": [
+        "/*"
+      ],
+      "read": [
+        "**"
+      ],
+      "write": [],
+      "bash": [
+        "python -m evals",
+        "python3 -m evals",
+        "git show",
+        "git log"
+      ]
+    }
+  }
+}

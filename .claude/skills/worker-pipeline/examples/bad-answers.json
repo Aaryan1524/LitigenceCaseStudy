@@ -1,0 +1,9 @@
+[
+  {"why": "unknown filing_type", "tenant_id": "alderbrook-law", "answer": {"filing_type": "subpoena", "matter_id": "M-3108", "filed_date": "2026-10-29"}},
+  {"why": "impossible date", "tenant_id": "alderbrook-law", "answer": {"filing_type": "order", "matter_id": "M-3108", "filed_date": "2026-02-30"}},
+  {"why": "matter only in the other tenant", "tenant_id": "alderbrook-law", "answer": {"filing_type": "motion", "matter_id": "M-4410", "filed_date": null}},
+  {"why": "missing key", "tenant_id": "fernwick-llp", "answer": {"filing_type": "order", "matter_id": "M-3108"}},
+  {"why": "wrong type", "tenant_id": "fernwick-llp", "answer": {"filing_type": "order", "matter_id": 3108, "filed_date": null}},
+  {"why": "not a dict", "tenant_id": "fernwick-llp", "answer": ["order", "M-3108", "2026-10-29"]},
+  {"why": "compact date format", "tenant_id": "fernwick-llp", "answer": {"filing_type": "order", "matter_id": "M-4410", "filed_date": "20261029"}}
+]
