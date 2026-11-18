@@ -4,8 +4,8 @@
 
 <div align="center">
   <h3>Six AI agents built a multi-tenant docket service in parallel, and
-  every line comes with proof of which agent wrote it and that none of
-  them peeked.</h3>
+  every line traces back to the agent and session that wrote it, with
+  each separation check and its result shown.</h3>
 </div>
 
 <div align="center">
@@ -27,20 +27,23 @@ This is my submission for the Litigence live exercise
   checked the agents that wrote it. I wrote no application or test code.
   Every agent ran in its own clone with a context pack holding only its
   slice of the contract. A guard hook and a stop gate enforced the rules,
-  and an audit proves the two no-peeking separations from git's own
-  content hashes.
+  and an audit checks the two no-peeking separations against git's own
+  content hashes. Every check passed except one, which is caused by my
+  own mistake (incident 4) and is explained below.
 
 ```bash
-pip install -r requirements.txt && pytest -q && python -m evals
+pip install -r requirements.txt && pytest && python -m evals
+# 156 passed, 1 warning
+# filing_type 20/20 = 1.00 ok · matter_id 20/20 = 1.00 ok · filed_date 20/20 = 1.00 ok
 ```
 
 > [!NOTE]
-> **Timeline, stated plainly.**
-> - **During the session:** I produced the Phase 1 setup (commits
->   16:49 to 17:05) but did not finish the build in the hour.
-> - **Afterwards, at the interviewer's invitation:**
->   - I upgraded the orchestration (18:03).
->   - The agents ran Phase 2 and Phase 3 (18:03 to 18:20).
+> **Timeline, from the commits.**
+> - **Phase 1 setup:** commits 16:49 to 17:05.
+> - **Orchestration upgrade:** 18:03.
+> - **Phases 2 and 3, run by the agents:** 18:03 to 18:20. These were
+>   finished after the live hour, at the interviewer's invitation.
+> - **Push:** the repo was pushed once, at the end, not after each phase.
 >
 > Every agent session's start and end time is in
 > `evidence/sessions.log`, and every commit carries its timestamp.
@@ -184,7 +187,7 @@ branch that has ever carried a code path, and the audit checks for it.
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/pytest -q                       # 156 passed
+.venv/bin/pytest                          # 156 passed, 1 warning
 .venv/bin/python -m evals                 # 1.00 on filing_type, matter_id, filed_date
 ```
 
@@ -225,7 +228,7 @@ repo alone:
 
 ```bash
 # Every agent commit names its role and session (the stamp hook lives in .git, out of agents' reach)
-git log --all --format='%h %<(10,trunc)%(trailers:key=Agent-Role,valueonly,separator=) %s' | grep -v '^[0-9a-f]* *  '
+git log --all --format='%h %<(10,trunc)%(trailers:key=Agent-Role,valueonly,separator=) %<(9,trunc)%(trailers:key=Agent-Session,valueonly,separator=) %s' | grep -v '^[0-9a-f]* *  '
 
 # The extract clone's history never held the eval data
 git clone -q evidence/clones/extract.bundle /tmp/ex && \
@@ -268,8 +271,10 @@ refusals; most were agents chaining `cat .claude/role` or `git -C`.
 | evals-data | Opus, no tools | 653 | 0 | 0 | 0 | 0.11 | 0.5 |
 | reviewer | Opus | 2434 | 14 | 0 | 0 | 0.38 | 1.2 |
 
-**Total agent spend: $6.02.** Gate attempts include follow-up sessions
-(contract amendment, review fix, demo).
+**Total agent spend: $6.02.** That covers the agent sessions only. It
+excludes the orchestrating session and the Phase 1 guard probes. Gate
+attempts include follow-up sessions (contract amendment, review fix,
+demo).
 
 ### Incidents (full detail in [evidence/incidents.md](evidence/incidents.md))
 
