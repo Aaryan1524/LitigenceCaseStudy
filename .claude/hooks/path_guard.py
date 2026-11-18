@@ -64,8 +64,11 @@ FS_ROOTS = r"(Users|private|tmp|var|etc|Volumes|opt|System|Library|Applications|
 def check_bash(cmd, allowed):
     if re.search(r"(^|[\s'\"=(:,])\.\.(/|\s|$|['\"])", cmd):
         return "parent directory reference; stay inside your checkout and use relative paths"
-    if re.search(r"(^|[\s'\"=(:,])~", cmd) or re.search(r"(^|[\s'\"=(:,])/" + FS_ROOTS + r"(/|\b)", cmd):
-        return "filesystem path outside your checkout; use paths relative to the checkout root"
+    if re.search(r"(^|[\s'\"=(:,])~", cmd):
+        return "home path; use paths relative to the checkout root"
+    for m in re.finditer(r"(?:^|(?<=[\s'\"=(:,]))(/" + FS_ROOTS + r"(?:/[^\s'\"),;]*)?)", cmd):
+        if rel(m.group(1)) is None:
+            return "filesystem path outside your checkout; use paths relative to the checkout root"
     if re.search(r"\.git(/|\b)(?!ignore)", cmd) or ".claude/role" in cmd:
         return "touches .git or the role file"
     if "`" in cmd or "$(" in cmd or "<<" in cmd:

@@ -34,7 +34,8 @@
     "git log --oneline",
     "ls",
     "pwd",
-    "wc"
+    "wc",
+    "cd"
   ],
   "roles": {
     "api": {
