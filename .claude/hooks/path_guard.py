@@ -69,6 +69,8 @@ def check_bash(cmd, allowed):
     for m in re.finditer(r"(?:^|(?<=[\s'\"=(:,]))(/" + FS_ROOTS + r"(?:/[^\s'\"),;]*)?)", cmd):
         if rel(m.group(1)) is None:
             return "filesystem path outside your checkout; use paths relative to the checkout root"
+    if re.search(r">>?\s*['\"]?(\./)?(\.claude|docs|context|tasks|plans|CLAUDE\.md)", cmd):
+        return "redirecting output into a protected path"
     if re.search(r"\.git(/|\b)(?!ignore)", cmd) or ".claude/role" in cmd:
         return "touches .git or the role file"
     if "`" in cmd or "$(" in cmd or "<<" in cmd:

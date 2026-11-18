@@ -1,0 +1,15 @@
+./.claude/agent-settings.json
+./.claude/base
+./.claude/contract-tips
+./.claude/hooks/chainlog.py
+./.claude/hooks/gate.py
+./.claude/hooks/path_guard.py
+./.claude/role
+./.claude/roles.json
+./.claude/settings.json
+./.gitignore
+./CLAUDE.md
+./context/evals-data.md
+./evals/notices.jsonl
+./pytest.ini
+./requirements.txt

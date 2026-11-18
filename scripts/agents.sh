@@ -196,7 +196,9 @@ case "${1:-}" in
     git -C "$AGENTS/$2" merge --quiet --no-edit FETCH_HEAD && echo "amended $2 from contract" ;;
   sync)
     [ "$2" = worker ] || refuse "only worker receives main"
-    git -C "$AGENTS/$2" pull --no-rebase --no-edit --quiet "$REPO" main && echo "synced $2" ;;
+    git -C "$AGENTS/$2" fetch --quiet "$REPO" main
+    git -C "$AGENTS/$2" rev-parse FETCH_HEAD >> "$AGENTS/$2/.claude/contract-tips"   # merged-in work is not this agent's
+    git -C "$AGENTS/$2" merge --quiet --no-edit FETCH_HEAD && echo "synced $2" ;;
   report)
     [ "${2:-}" = tests ] || refuse "usage: report tests"
     (cd "$REPO" && "$PY" -m pytest --tb=no -rfE -q -p no:cacheprovider 2>&1 | tail -40) ;;
