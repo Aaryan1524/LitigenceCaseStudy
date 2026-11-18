@@ -102,6 +102,25 @@ def main():
         ok_all &= good
         md.append(f"| {role} | {', '.join(prefixes)} | {len(blobs)} | {absent}/{len(blobs)} {'✅' if good else '❌'} |")
 
+    # negative controls: the checks must be able to fail
+    md += ["", "### Negative controls (the checks can fail)", ""]
+    ev = [l.split()[2] for l in git("ls-tree", "-r", "main", "--", "evals/notices.jsonl").splitlines()]
+    present_in_repo = bool(ev) and not blob_absent(REPO, ev[0])
+    ok_all &= present_in_repo
+    md.append(f"- Fingerprint check pointed at the architect repo, which does hold `evals/notices.jsonl`: {'reports present ✅' if present_in_repo else 'did not detect it ❌'}")
+    import shutil, tempfile
+    src = AGENTS / "extract" / ".claude" / "guard.log"
+    if src.exists():
+        tmp = Path(tempfile.mkdtemp()) / "guard.log"
+        shutil.copy(src, tmp)
+        data = bytearray(tmp.read_bytes())
+        i = data.index(b'"decision"') + 13
+        data[i] = ord("X")
+        tmp.write_bytes(bytes(data))
+        broke = not chainlog.verify(tmp)[0]
+        ok_all &= broke
+        md.append(f"- Hash chain on a copy of extract's guard log with one byte edited: {'reports broken ✅' if broke else 'still verifies ❌'}")
+
     # 4: chains
     md += ["", "## 3. Hash-chained logs", "", "| Log | Lines | Chain |", "|---|---|---|"]
     for role in ROLES:
@@ -123,18 +142,26 @@ def main():
 
     # 6: tests read-before-write
     md += ["", "## 5. Tests agent: read-before-write check", ""]
-    tlog = read_jsonl(AGENTS / "tests" / ".claude" / "guard.log")
-    base_files = set(git("ls-tree", "-r", "--name-only", "main", "--", "context/tests.md").split()) | {"CLAUDE.md"}
-    written, suspicious = set(), []
-    for e in tlog:
-        tgt = str(e.get("target") or "")
-        rel = tgt.split("/tests/")[-1] if "/tests/" in tgt else None
-        if e.get("tool") in ("Write", "Edit") and e.get("decision") == "allow" and rel:
-            written.add(rel)
-        if e.get("tool") == "Read" and e.get("decision") == "allow" and rel and rel not in written:
-            suspicious.append(rel)
-    ok_all &= not suspicious
-    md.append(f"Reads of tests/ files the agent had not written itself: {suspicious or 'none ✅'}")
+    troot = (AGENTS / "tests").resolve()
+    tlog = read_jsonl(troot / ".claude" / "guard.log")
+
+    def rel_to_clone(t):
+        p = Path(str(t or ""))
+        p = p if p.is_absolute() else troot / p
+        try:
+            return p.resolve().relative_to(troot).as_posix()
+        except ValueError:
+            return None
+
+    tbase = (troot / ".claude" / "base").read_text().strip() if (troot / ".claude" / "base").exists() else "main"
+    base_files = set(git("ls-tree", "-r", "--name-only", tbase, "--", "tests", cwd=troot).split())
+    written = {rel_to_clone(e.get("target")) for e in tlog if e.get("tool") in ("Write", "Edit") and e.get("decision") == "allow"}
+    reads = [rel_to_clone(e.get("target")) for e in tlog if e.get("tool") == "Read" and e.get("decision") == "allow"]
+    suspicious = sorted({r for r in reads if r and r.startswith("tests/") and r not in written and r not in base_files})
+    dirty = git("status", "--porcelain", cwd=troot).strip()
+    ok_all &= not suspicious and not dirty
+    md.append(f"Reads of tests/ files the agent neither wrote nor had in its base: {suspicious or 'none ✅'}")
+    md.append(f"Untracked or modified files in the tests clone (possible conftest side effects): {dirty or 'none ✅'}")
 
     # 7: scorecard
     md += ["", "## 6. Agent scorecard (lean slice)", "",

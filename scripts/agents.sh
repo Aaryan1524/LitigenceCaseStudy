@@ -158,7 +158,9 @@ res = json.load(open(sys.argv[1]))
 rec = {"session": sys.argv[3], "tools": "none", "cwd": "empty temp dir", "model_usage": res.get("modelUsage") or res.get("usage"),
        "prompt_sha256": hashlib.sha256(open(sys.argv[2], "rb").read()).hexdigest(),
        "output_sha256": hashlib.sha256(res["result"].encode()).hexdigest(),
-       "cost_usd": res.get("total_cost_usd"), "duration_ms": res.get("duration_ms")}
+       "cost_usd": res.get("total_cost_usd"), "duration_ms": res.get("duration_ms"),
+       "num_turns": res.get("num_turns"), "permission_denials": res.get("permission_denials"),
+       "no_tool_use_proof": "num_turns == 1 means one model reply and no tool round-trips"}
 json.dump(rec, open(sys.argv[4], "w"), indent=2); print("recorded", sys.argv[4])
 PYEOF
 }
