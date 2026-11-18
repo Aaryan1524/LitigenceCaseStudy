@@ -58,15 +58,20 @@ def matches(path, patterns):
     return any(path == pat or fnmatch.fnmatch(path, pat) for pat in patterns)
 
 
+FS_ROOTS = r"(Users|private|tmp|var|etc|Volumes|opt|System|Library|Applications|home|root|usr|bin|sbin|proc|dev(?!/null))"
+
+
 def check_bash(cmd, allowed):
-    if re.search(r"(^|[\s'\"=(])\.\.(/|\s|$|['\"])", cmd):
-        return "parent directory reference"
-    if re.search(r"(^|[\s'\"=(])(~|/(?!dev/null))", cmd):
-        return "absolute or home path"
+    if re.search(r"(^|[\s'\"=(:,])\.\.(/|\s|$|['\"])", cmd):
+        return "parent directory reference; stay inside your checkout and use relative paths"
+    if re.search(r"(^|[\s'\"=(:,])~", cmd) or re.search(r"(^|[\s'\"=(:,])/" + FS_ROOTS + r"(/|\b)", cmd):
+        return "filesystem path outside your checkout; use paths relative to the checkout root"
     if re.search(r"\.git(/|\b)(?!ignore)", cmd) or ".claude/role" in cmd:
-        return "touches .git or role file"
-    if "`" in cmd or "$(" in cmd:
-        return "command substitution"
+        return "touches .git or the role file"
+    if "`" in cmd or "$(" in cmd or "<<" in cmd:
+        return 'command substitution or heredoc; commit with one plain line: git commit -m "message"'
+    if re.search(r"\$\{|\$[A-Za-z_]", cmd):
+        return "shell variables are not allowed; write the literal relative path"
     try:
         lex = shlex.shlex(cmd.replace("2>&1", "").replace("\n", " ; "), posix=True, punctuation_chars=";&|")
         lex.whitespace_split = True
@@ -87,13 +92,15 @@ def check_bash(cmd, allowed):
         if not words:
             continue
         if words[0] == "git" and len(words) > 1:
+            if words[1].startswith("-") or any(w.startswith(("--git-dir", "--work-tree")) for w in words):
+                return "git global options (-C, --git-dir, --work-tree) are not allowed"
             if words[1] in DENY_GIT or any(w in ("--all", "--branches", "--remotes", "--glob") for w in words):
-                return f"git {words[1]} not allowed"
+                return f"git {words[1]} is not allowed; only status, add, commit, diff (working tree), log --oneline"
             if words[1] == "diff" and any(not w.startswith("-") for w in words[2:]):
-                return "git diff against another ref"
+                return "git diff against another ref is not allowed; use plain git diff or git diff --stat"
         norm = " ".join(words)
         if not any(norm == a or norm.startswith(a + " ") or (a.endswith("/") and norm.startswith(a)) for a in allowed):
-            return f"command not in allowlist: {words[0]}"
+            return f"'{words[0]}' is not allowed for this role; allowed: {', '.join(sorted(set(allowed)))}"
     return None
 
 

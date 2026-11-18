@@ -10,4 +10,5 @@ Must include:
 - a valid notice with no date, and one with no matter
 - M-3108 for both tenants
 - all four filing types
-Acceptance: exactly 20 lines, each valid JSON with the section 10 keys, every tenant one of the two seeded. Paste one line per required case naming its `id`.
+You cannot run code (no python); you write the file and count lines with `wc -l`.
+Acceptance: `wc -l evals/notices.jsonl` shows 20; paste one line per required case naming its `id`. The architect validates the JSON and sends back any errors.

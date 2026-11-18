@@ -12,4 +12,5 @@ Build, using a temp db per test:
 7. Approving twice, including concurrently: one calendar row and two 200s.
 8. Boundaries: `extract` takes exactly one parameter; nothing under `app/` imports `extractor` or `worker` (parse with `ast`, skip if `app/` is absent).
 9. End to end: signed webhook, `run_once`, approve, list.
-Acceptance: `pytest --collect-only -q` collects every test without errors. When the architect sends you `pytest` output from `main`, report each failure with its probable cause; do not edit a test to turn it green without saying why the test was wrong.
+You cannot run code (no python or pytest); this keeps you blind to the implementation. Write carefully.
+Acceptance: the architect runs `pytest --collect-only -q` on your branch and sends you the output; fix anything that fails to collect. When the architect sends you `pytest` output from `main`, report each failure with its probable cause; do not edit a test to turn it green without saying why the test was wrong.

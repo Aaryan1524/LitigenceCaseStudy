@@ -7,5 +7,5 @@ Context: CLAUDE.md, docs/contract.md, parallel-filings-brief.md, tasks/tests.md.
 4. `tests/test_review.py`: approve 409 on received and null matter, 404 cases, approve twice sequential and concurrent gives one calendar row and two 200s, list scoped per tenant, `[]` and 404. Commit.
 5. `tests/test_boundaries.py`: `extract` signature is exactly (text); AST scan of `app/**/*.py` finds no import of `extractor` or `worker` (skip if `app/` missing). Commit.
 6. `tests/test_e2e.py`: signed webhook -> `run_once` -> approve -> list shows `docketed`. Commit.
-7. `pytest --collect-only -q`. Paste output.
-CHECKPOINT: report done. Later the architect sends pytest output from main; diagnose without weakening tests.
+7. List every test function you wrote, grouped by file, with the brief requirement each covers.
+CHECKPOINT: report done. The architect runs `pytest --collect-only -q` on your branch and sends the output; fix collection errors only. Later the architect sends pytest output from main; diagnose without weakening tests.
