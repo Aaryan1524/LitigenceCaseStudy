@@ -1,0 +1,164 @@
+{
+  "_doc": "Per-role allowlists. 'checkout' = sparse-checkout patterns (what exists on disk). 'read'/'write' = glob paths relative to the checkout root, enforced by .claude/hooks/path_guard.py. 'bash' = allowed command prefixes. Writes to protected paths are denied for every role. Roles that must stay blind to other code (evals-data, tests) get no code execution at all.",
+  "protected": [
+    "CLAUDE.md",
+    "docs/**",
+    ".claude/**",
+    ".git/**",
+    "tasks/**",
+    "plans/**",
+    "parallel-filings-brief.md"
+  ],
+  "common_checkout": [
+    "/CLAUDE.md",
+    "/docs/",
+    "/parallel-filings-brief.md",
+    "/requirements.txt",
+    "/pytest.ini",
+    "/.gitignore",
+    "/.claude/settings.json",
+    "/.claude/agent-settings.json",
+    "/.claude/roles.json",
+    "/.claude/hooks/"
+  ],
+  "common_read": [
+    "CLAUDE.md",
+    "docs/**",
+    "parallel-filings-brief.md",
+    "requirements.txt",
+    "pytest.ini",
+    ".claude/role"
+  ],
+  "common_bash": [
+    "git status",
+    "git add",
+    "git commit",
+    "git diff",
+    "git log --oneline",
+    "ls",
+    "pwd",
+    "wc"
+  ],
+  "roles": {
+    "api": {
+      "checkout": [
+        "/tasks/api.md",
+        "/plans/api.md",
+        "/app/"
+      ],
+      "read": [
+        "tasks/api.md",
+        "plans/api.md",
+        "app/**"
+      ],
+      "write": [
+        "app/**"
+      ],
+      "bash": [
+        "python",
+        "python3",
+        "pytest",
+        "python -m pytest"
+      ]
+    },
+    "worker": {
+      "checkout": [
+        "/tasks/worker.md",
+        "/plans/worker.md",
+        "/worker/",
+        "/evals/__init__.py",
+        "/evals/__main__.py",
+        "/app/",
+        "/extractor/",
+        "/.claude/skills/worker-pipeline/"
+      ],
+      "read": [
+        "tasks/worker.md",
+        "plans/worker.md",
+        "worker/**",
+        "evals/__init__.py",
+        "evals/__main__.py",
+        "app/**",
+        "extractor/**",
+        ".claude/skills/worker-pipeline/**"
+      ],
+      "write": [
+        "worker/**",
+        "evals/__init__.py",
+        "evals/__main__.py"
+      ],
+      "bash": [
+        "python",
+        "python3",
+        "pytest",
+        "python -m pytest",
+        "bash .claude/skills/worker-pipeline/scripts/",
+        "sqlite3"
+      ]
+    },
+    "extract": {
+      "checkout": [
+        "/tasks/extract.md",
+        "/plans/extract.md",
+        "/extractor/"
+      ],
+      "read": [
+        "tasks/extract.md",
+        "plans/extract.md",
+        "extractor/**"
+      ],
+      "write": [
+        "extractor/**"
+      ],
+      "bash": [
+        "python",
+        "python3",
+        "pytest",
+        "python -m pytest"
+      ]
+    },
+    "evals-data": {
+      "checkout": [
+        "/tasks/evals-data.md",
+        "/plans/evals-data.md",
+        "/evals/notices.jsonl"
+      ],
+      "read": [
+        "tasks/evals-data.md",
+        "plans/evals-data.md",
+        "evals/notices.jsonl"
+      ],
+      "write": [
+        "evals/notices.jsonl"
+      ],
+      "bash": []
+    },
+    "tests": {
+      "checkout": [
+        "/tasks/tests.md",
+        "/plans/tests.md",
+        "/tests/"
+      ],
+      "read": [
+        "tasks/tests.md",
+        "plans/tests.md",
+        "tests/**"
+      ],
+      "write": [
+        "tests/**"
+      ],
+      "bash": []
+    },
+    "reviewer": {
+      "_note": "Not used: the reviewer runs in the architect checkout with --permission-mode plan (read-only). See docs/permissions.md.",
+      "checkout": [
+        "/*"
+      ],
+      "read": [
+        "**"
+      ],
+      "write": [],
+      "bash": []
+    }
+  }
+}
