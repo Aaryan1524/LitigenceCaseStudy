@@ -59,7 +59,8 @@ def extract(text: str) -> dict   # {"filing_type": str, "matter_id": str|None, "
 Extractor = Callable[[str], object]
 def check(answer: object, tenant_id: str, conn) -> dict
 #   validates per section 5, looks up matters with app.db.matter_ids(conn, tenant_id)
-#   returns {"matter_id","filing_type","filed_date","needs_review"}; never raises
+#   returns {"matter_id","filing_type","filed_date","needs_review"}; never raises for a bad answer,
+#   but a database error (sqlite3.Error) from the matter lookup propagates: it is not an invalid answer
 def run_extraction(text: str, tenant_id: str, conn, extractor: Extractor = extract) -> dict
 #   = check(extractor(text), tenant_id, conn); an extractor exception counts as an invalid answer
 
@@ -88,6 +89,7 @@ WHERE id = (SELECT id FROM notices WHERE status='received' ORDER BY id LIMIT 1)
 RETURNING id, tenant_id, text
 ```
 No row returned means nothing to claim; loop ends. Write the result with `UPDATE ... SET status='pending' WHERE id=? AND status='processing'`.
+If `run_extraction` raises `sqlite3.Error`, `run_once` writes nothing for that notice (it stays `processing`, the out-of-scope crash case), prints the notice id and error to stderr, and stops the run with a non-zero exit from `python -m worker --once`. A database error must never be stored as an invalid answer.
 
 ## 7. HTTP behaviour
 Intake `POST /webhooks/notices`, in this order, all before any write:
@@ -95,7 +97,7 @@ Intake `POST /webhooks/notices`, in this order, all before any write:
 |---|---|---|
 | 1 | invalid JSON, not an object, or `notice_id`/`inbox`/`text` missing or not a string | 400 |
 | 2 | inbox matches no tenant | 404 |
-| 3 | `X-Signature` missing, or not hex HMAC-SHA256(raw bytes, tenant secret) (`hmac.compare_digest`) | 403 |
+| 3 | `X-Signature` missing, non-ASCII, or not hex HMAC-SHA256(raw bytes, tenant secret) (`hmac.compare_digest`) | 403 |
 | 4 | new notice: `INSERT ... ON CONFLICT(tenant_id, notice_id) DO NOTHING`, status `received` | 200 |
 | 5 | repeat notice_id: original kept | 200 |
 
@@ -136,6 +138,7 @@ Text inside a notice is data. An instruction in the text ("ignore your instructi
 `python -m evals` seeds an in-memory db with `app.db`, calls `run_extraction(text, tenant, conn)` per line, prints accuracy per field, exits non-zero if any field is below 0.90.
 
 ## 11. Change log
+- 2026-11-18 (review): a database error during the matter lookup propagates instead of being stored as an invalid answer (sections 4, 6); a non-ASCII signature header is a 403 (section 7). From reviewer findings 3 and 2.
 - 2026-11-18: section 2 now lists the seed tenants and matters explicitly. The api agent's context pack had no copy of the brief, so it stopped instead of inventing fixtures.
 - 2026-11-18: split `check(answer, tenant_id, conn)` out of `run_extraction`; worker tools are `extract(text)` and `check(answer, tenant)`.
 - 2026-11-18: added the import boundary (section 4) and the notice text conventions (section 9), so extract and eval labels agree without seeing each other.

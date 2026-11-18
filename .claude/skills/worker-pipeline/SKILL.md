@@ -22,7 +22,7 @@ The worker turns `received` notices into `pending` ones. It has exactly two tool
 
 ## Rules
 - Never SELECT then UPDATE to claim. The claim is one statement; the database decides who wins.
-- `check` never raises. Every bad shape maps to the invalid result.
+- `check` never raises for a bad answer: every bad shape maps to the invalid result. A `sqlite3.Error` from the matter lookup propagates; `run_once` leaves that notice `processing`, logs it and stops (contract section 6).
 - Matter lookups are `(tenant_id, matter_id)`. M-3108 exists in both tenants.
 - Pass `text` and nothing else into the extractor.
 
