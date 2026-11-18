@@ -8,4 +8,5 @@ Context: CLAUDE.md, docs/contract.md, parallel-filings-brief.md, tasks/tests.md.
 5. `tests/test_boundaries.py`: `extract` signature is exactly (text); AST scan of `app/**/*.py` finds no import of `extractor` or `worker` (skip if `app/` missing). Commit.
 6. `tests/test_e2e.py`: signed webhook -> `run_once` -> approve -> list shows `docketed`. Commit.
 7. List every test function you wrote, grouped by file, with the brief requirement each covers.
-CHECKPOINT: report done. The architect runs `pytest --collect-only -q` on your branch and sends the output; fix collection errors only. Later the architect sends pytest output from main; diagnose without weakening tests.
+CHECKPOINT: report done. The architect runs `pytest --collect-only -q` on your branch and sends the output; fix collection errors only.
+After integration you receive only `agents.sh report tests` output: test ids and one-line failure messages, never tracebacks or source. Later the architect sends pytest output from main; diagnose without weakening tests.

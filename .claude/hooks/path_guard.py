@@ -70,6 +70,8 @@ def check_bash(cmd, allowed):
         return "touches .git or the role file"
     if "`" in cmd or "$(" in cmd or "<<" in cmd:
         return 'command substitution or heredoc; commit with one plain line: git commit -m "message"'
+    if re.search(r"-m\s+(pip|ensurepip|venv)\b|\bpip3?\b|ensurepip", cmd):
+        return "installing packages is not allowed; the venv already has the four allowed dependencies"
     if re.search(r"\$\{|\$[A-Za-z_]", cmd):
         return "shell variables are not allowed; write the literal relative path"
     try:
