@@ -184,7 +184,10 @@ case "${1:-}" in
   run) run "$2" ;;
   resume) resume "$2" "$3" ;;
   evals-call) evals_call ;;
-  amend) git -C "$AGENTS/$2" pull --no-rebase --no-edit --quiet "$REPO" contract && echo "amended $2 from contract" ;;
+  amend)
+    git -C "$AGENTS/$2" fetch --quiet "$REPO" contract
+    git -C "$AGENTS/$2" rev-parse FETCH_HEAD >> "$AGENTS/$2/.claude/contract-tips"
+    git -C "$AGENTS/$2" merge --quiet --no-edit FETCH_HEAD && echo "amended $2 from contract" ;;
   sync)
     [ "$2" = worker ] || refuse "only worker receives main"
     git -C "$AGENTS/$2" pull --no-rebase --no-edit --quiet "$REPO" main && echo "synced $2" ;;

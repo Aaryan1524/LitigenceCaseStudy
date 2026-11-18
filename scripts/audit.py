@@ -67,7 +67,7 @@ def main():
             continue
         clone = AGENTS / role
         base = (clone / ".claude" / "base").read_text().strip() if (clone / ".claude" / "base").exists() else "main"
-        commits = [c for c in git("rev-list", "--no-merges", f"{base}..feat/{role}").split() if c]
+        commits = [c for c in git("rev-list", "--no-merges", f"{base}..feat/{role}", "^contract").split() if c]
         role_sessions = {s["session"] for s in sess if s["role"] == role}
         stamped = match = 0
         for c in commits:
@@ -76,7 +76,7 @@ def main():
             s = next((l.split(":", 1)[1].strip() for l in msg.splitlines() if l.startswith("Agent-Session:")), None)
             stamped += r == role
             match += s in role_sessions
-        touched = {f for f in git("log", "--no-merges", "--format=", "--name-only", f"{base}..feat/{role}").splitlines() if f}
+        touched = {f for f in git("log", "--no-merges", "--format=", "--name-only", f"{base}..feat/{role}", "^contract").splitlines() if f}
         outside = sorted(f for f in touched if not any(fnmatch.fnmatch(f, p) for p in CFG["roles"][role]["write"]))
         good = stamped == len(commits) and match == len(commits) and not outside
         ok_all &= good
