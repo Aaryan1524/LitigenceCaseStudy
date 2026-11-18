@@ -12,6 +12,7 @@ Invalid result: `{"matter_id": None, "filing_type": None, "filed_date": None, "n
 | `filed_date` not None and not a str | no | invalid |
 | `filed_date` a str that is not a real `YYYY-MM-DD` date (2026-02-30, 2026-13-01, 26-1-1) | no | invalid |
 | extractor raised | no | invalid |
+| matter lookup raised `sqlite3.Error` | not an answer problem | propagate; never store as invalid |
 | all valid, `matter_id` None | yes | fields as given, `needs_review=True` |
 | all valid, `filed_date` None | yes | fields as given |
 | all valid with a matter of this tenant | yes | fields as given, `needs_review=False` |
