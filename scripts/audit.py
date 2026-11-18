@@ -23,6 +23,8 @@ sys.path.insert(0, str(REPO / ".claude" / "hooks"))
 import chainlog  # noqa: E402
 
 ROLES = ["api", "worker", "extract", "evals-data", "tests", "reviewer"]
+# Architect branches whose commits are never an agent's own work (contract-contaminated: see evidence/incidents.md #4)
+ARCHITECT_REFS = ["contract", "contract-contaminated"]
 CFG = json.loads((REPO / ".claude" / "roles.json").read_text())
 
 
@@ -70,7 +72,7 @@ def main():
         role_sessions = {s["session"] for s in sess if s["role"] == role}
         commits, foreign = [], 0
         stamped = match = 0
-        for c in [c for c in git("rev-list", "--no-merges", f"{base}..feat/{role}", "^contract").split() if c]:
+        for c in [c for c in git("rev-list", "--no-merges", f"{base}..feat/{role}", *["^" + r for r in ARCHITECT_REFS if git("rev-parse", "--verify", f"refs/heads/{r}")]).split() if c]:
             msg = git("log", "-1", "--format=%B", c)
             r = next((l.split(":", 1)[1].strip() for l in msg.splitlines() if l.startswith("Agent-Role:")), None)
             s = next((l.split(":", 1)[1].strip() for l in msg.splitlines() if l.startswith("Agent-Session:")), None)
