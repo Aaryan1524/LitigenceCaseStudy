@@ -26,7 +26,7 @@ setup_role() {
   patterns "$role" | git -C "$dir" sparse-checkout set --no-cone --stdin
   git -C "$dir" checkout --quiet -b "feat/$role"
   echo "$role" > "$dir/.claude/role"
-  echo "ready $role -> $dir ($(cd "$dir" && git ls-files | wc -l | tr -d ' ') files on disk)"
+  echo "ready $role -> $dir ($(cd "$dir" && find . -path ./.git -prune -o -type f -print | wc -l | tr -d ' ') files on disk)"
 }
 
 launch() {
