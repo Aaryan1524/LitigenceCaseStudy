@@ -36,14 +36,18 @@ CREATE TABLE IF NOT EXISTS calendar_entries(
 );
 """
 
-# Seed fixtures. Only values fully stated in the contract are included.
-# PENDING (contract gap, reported to architect): fernwick tenant_id and inbox,
-# and the four (tenant_id, matter_id) pairs from the brief are not in
-# context/api.md. They must be added here once the contract carries them.
+# Seed fixtures, exactly per contract section 2 (synthetic test data).
+# Matter IDs are unique within a tenant only: the two M-3108 rows differ.
 SEED_TENANTS = [
     ("alderbrook-law", "dockets@alderbrook-law.example", "alderbrook-fixture-key"),
+    ("fernwick-llp", "dockets@fernwick-llp.example", "fernwick-fixture-key"),
 ]
-SEED_MATTERS: list[tuple[str, str]] = []
+SEED_MATTERS = [
+    ("alderbrook-law", "M-3108"),
+    ("alderbrook-law", "M-3109"),
+    ("fernwick-llp", "M-3108"),
+    ("fernwick-llp", "M-4410"),
+]
 
 
 def connect(path: str | None = None) -> sqlite3.Connection:
