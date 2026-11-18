@@ -72,13 +72,17 @@ def main():
         role_sessions = {s["session"] for s in sess if s["role"] == role}
         commits, foreign = [], 0
         stamped = match = 0
-        for c in [c for c in git("rev-list", "--no-merges", f"{base}..feat/{role}", *["^" + r for r in ARCHITECT_REFS if git("rev-parse", "--verify", f"refs/heads/{r}")]).split() if c]:
+        arch_refs = [r for r in ARCHITECT_REFS if git("rev-parse", "--verify", f"refs/heads/{r}")]
+        for c in [c for c in git("rev-list", "--no-merges", f"{base}..feat/{role}").split() if c]:
             msg = git("log", "-1", "--format=%B", c)
             r = next((l.split(":", 1)[1].strip() for l in msg.splitlines() if l.startswith("Agent-Role:")), None)
             s = next((l.split(":", 1)[1].strip() for l in msg.splitlines() if l.startswith("Agent-Session:")), None)
-            if r and r not in (role, "architect"):
-                foreign += 1  # another agent's stamped work, merged in by the architect (sync)
+            if r and r != role:
+                foreign += r != "architect"  # another agent's stamped work, merged in by the architect (sync)
                 continue
+            if r is None and any(subprocess.run(["git", "merge-base", "--is-ancestor", c, ref], cwd=REPO).returncode == 0 for ref in arch_refs):
+                continue  # unstamped architect commit (contract, docs) made in the architect repo
+            # stamped by this role, or unstamped and not the architect's: counted (unstamped fails the check)
             commits.append(c)
             stamped += r == role
             match += s in role_sessions
@@ -198,7 +202,7 @@ def main():
         md.append(f"| {role} | {on_disk} | {words} | {len(g)} | {sum(e.get('decision') == 'deny' for e in g)} | {len(gates)} | {turns} | {cost} | {mins} |")
 
     md += ["", f"**Overall: {'all checks passed ✅' if ok_all else 'some checks failed ❌ (see above)'}**", ""]
-    out = REPO / "evidence" / "audit.md"
+    out = Path(os.environ.get("AUDIT_OUT", REPO / "evidence" / "audit.md"))
     out.parent.mkdir(exist_ok=True)
     out.write_text("\n".join(md))
     print("\n".join(md))
