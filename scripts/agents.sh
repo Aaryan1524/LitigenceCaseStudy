@@ -193,6 +193,10 @@ case "${1:-}" in
   resume) resume "$2" "$3" ;;
   evals-call) evals_call ;;
   amend)
+    # The contract branch must never carry code: refuse if it does (this happened once; see evidence/incidents.md).
+    if git -C "$REPO" log contract --name-only --format= | grep -qE '^(app|worker|extractor|evals|tests)/'; then
+      refuse "the contract branch contains code paths; rebuild it from docs-only commits before amending"
+    fi
     git -C "$AGENTS/$2" fetch --quiet "$REPO" contract
     git -C "$AGENTS/$2" rev-parse FETCH_HEAD >> "$AGENTS/$2/.claude/contract-tips"
     git -C "$AGENTS/$2" merge --quiet --no-edit FETCH_HEAD && echo "amended $2 from contract" ;;
