@@ -14,7 +14,12 @@
       "Bash(ls:*)",
       "Bash(pwd)",
       "Bash(wc:*)",
-      "Bash(bash .claude/skills/worker-pipeline/scripts/*)"
+      "Bash(bash .claude/skills/worker-pipeline/scripts/*)",
+      "Bash(cd:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(cat:*)",
+      "Bash(echo:*)"
     ],
     "deny": [
       "WebFetch",
