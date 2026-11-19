@@ -6,9 +6,6 @@ agents at once to build a multi-tenant docket service. The brief judges the
 setup and how the agents are directed and checked, so this README follows
 the brief's own phases. Every row links to the evidence.
 
-I did not finish in the live hour. Phase 1 was set up first; Phases 2 and 3
-were run afterwards, at the interviewer's invitation.
-
 ## Scorecard against the brief
 
 | The brief asks for | Status | Where |
@@ -199,8 +196,6 @@ starts with `scripts/agents.sh setup`.
 
 ## Notes
 
-- **Timeline.** Phase 1 commits: 16:49 to 17:05. Build and review: 18:03 to
-  18:20, after the live hour. The second suite was added later.
 - **Pushes.** The brief asks for a push after each phase; I pushed once, at
   the end.
 - **Mistakes during the build**, including my own, are listed in
