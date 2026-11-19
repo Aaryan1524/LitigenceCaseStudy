@@ -1,8 +1,6 @@
 <div align="center">
   <h1>Litigence Parallel Filings</h1>
-  <h3>Coding agents run like an untrusted contractor team: a written
-  contract, sealed workspaces, machine-checked hand-offs, and proof of
-  who wrote what.</h3>
+  <h3></h3>
   <img src="https://img.shields.io/badge/independent%20tests-160%20passing-brightgreen" alt="Independent tests: 160 passing">
   <img src="https://img.shields.io/badge/evals-100%25-brightgreen" alt="Evals: 100%">
   <img src="https://img.shields.io/badge/defect%20probes-7%2F7%20caught-2E7D32" alt="Defect probes: 7 of 7 caught">
