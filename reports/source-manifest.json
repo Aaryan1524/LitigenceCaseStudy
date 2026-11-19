@@ -1,0 +1,16 @@
+{
+  "source_repository": "/Users/aaryan/Downloads/LitigenceAI",
+  "revision": "97e1ccd938caf91a5896999cf9273e52f81ae398",
+  "files": {
+    "app/__init__.py": "c4fed08f38f0b93783993ec2de1cd56a31bc511731adb4b2247b858a747e44c3",
+    "app/constants.py": "ca213da1f8fcc4b136f676aac0bec1289cfda10a2e0d53c6d67aac1fa9c91af2",
+    "app/db.py": "9299e733dfc22d427fd1a4312cd73350c5371187df67d796dc412c0eecc4f5c6",
+    "app/main.py": "bf2253abe596f034bb0614403e5344e76880fdebf0f1ee37e52d93096782dfc3",
+    "extractor/__init__.py": "8a82717ea368dead4d8d9b92caa1c2449e9dc921198d2c75423501cc4008b820",
+    "extractor/extract.py": "2483b6c6f084a8eeb7c035668ccda5ea4940e5f64b7bbe842140b3541bb17c4f",
+    "worker/__init__.py": "75bc9a5bb76b33062bce9e6305405184a27afa9aa8a11e9c1052652c6d8e90bb",
+    "worker/__main__.py": "2a6a0acbc6835e3661df1cb75a611cbac03abdf2775e818c69ae6521aeb1df42",
+    "worker/checks.py": "8710edc71e17dbd3d7a4e74782ff61f75700d525a25341dbe07eafcd8d85bf74",
+    "worker/run.py": "b31d012e385269a625611fe7eda767c2fadcdff42129336d4fc4d20fd8c14796"
+  }
+}
