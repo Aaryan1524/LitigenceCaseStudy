@@ -1,0 +1,37 @@
+{
+  "time_utc": "2026-11-19T00:18:44.531271+00:00",
+  "revision": "97e1ccd938caf91a5896999cf9273e52f81ae398",
+  "python": "3.14.6",
+  "platform": "macOS-27.2.1-arm64-arm-64bit-Mach-O",
+  "source_unchanged": true,
+  "tests_ran": 160,
+  "runs": [
+    {
+      "command": [
+        "/private/tmp/litigence-eval-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--junitxml=/Users/aaryan/Downloads/litigence-eval/reports/tests.xml"
+      ],
+      "returncode": 0,
+      "stdout": "........................................................................ [ 45%]\n........................................................................ [ 90%]\n................                                                         [100%]\n=============================== warnings summary ===============================\n../../../../private/tmp/litigence-eval-venv/lib/python3.14/site-packages/fastapi/testclient.py:1\n  /private/tmp/litigence-eval-venv/lib/python3.14/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n160 passed, 1 warning in 1.52s\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/private/tmp/litigence-eval-venv/bin/python",
+        "-m",
+        "evals",
+        "--json-report",
+        "/Users/aaryan/Downloads/litigence-eval/reports/evals.json"
+      ],
+      "returncode": 0,
+      "stdout": "filing_type: 20/20 = 100.00%\nmatter_id: 20/20 = 100.00%\nfiled_date: 20/20 = 100.00%\nexact_match: 100.00%\nPASS (each field must be >= 90%)\n",
+      "stderr": ""
+    }
+  ],
+  "passed": true
+}

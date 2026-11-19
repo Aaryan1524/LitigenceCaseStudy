@@ -1,0 +1,17 @@
+{
+  "total": 20,
+  "correct": {
+    "filing_type": 20,
+    "matter_id": 20,
+    "filed_date": 20
+  },
+  "accuracy": {
+    "filing_type": 1.0,
+    "matter_id": 1.0,
+    "filed_date": 1.0
+  },
+  "exact_match": 1.0,
+  "threshold": 0.9,
+  "passed": true,
+  "failures": []
+}

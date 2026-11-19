@@ -1,0 +1,91 @@
+{
+  "total": 7,
+  "detected": 7,
+  "baseline": {
+    "returncode": 0,
+    "tests": 12,
+    "failures": 0,
+    "errors": 0,
+    "stdout": "............                                                             [100%]\n=============================== warnings summary ===============================\n../../../../../../tmp/litigence-eval-venv/lib/python3.14/site-packages/fastapi/testclient.py:1\n  /private/tmp/litigence-eval-venv/lib/python3.14/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n12 passed, 1 warning in 0.25s\n",
+    "stderr": ""
+  },
+  "mutations": [
+    {
+      "name": "signature-bypass",
+      "test": "tests/test_http.py::test_other_tenant_key_cannot_authorize_delivery",
+      "killed": true,
+      "returncode": 1,
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_______________ test_other_tenant_key_cannot_authorize_delivery ________________\n\nclient = <starlette.testclient.TestClient object at 0x10c8ac1a0>\ndb_path = PosixPath('/private/var/folders/25/pg8bqm996wg0fmy68pbv0br40000gn/T/pytest-of-aaryan/pytest-9/test_other_tenant_key_cannot_a0/test.sqlite')\n\n    def test_other_tenant_key_cannot_authorize_delivery(client, db_path):\n        raw = body()\n        response = client.post(\"/webhooks/notices\", content=raw,\n                               headers={\"X-Signature\": signature(raw, FERN)})\n>       assert response.status_code == 403\nE       assert 200 == 403\nE        +  where 200 = <Response [200 OK]>.status_code\n\ntests/test_http.py:52: AssertionError\n=============================== warnings summary ===============================\n../../../../../../tmp/litigence-eval-venv/lib/python3.14/site-packages/fastapi/testclient.py:1\n  /private/tmp/litigence-eval-venv/lib/python3.14/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ============================\nFAILED tests/test_http.py::test_other_tenant_key_cannot_authorize_delivery - ...\n1 failed, 1 warning in 0.10s\n",
+      "stderr": ""
+    },
+    {
+      "name": "sign-reserialized-json",
+      "test": "tests/test_http.py::test_published_signature_example",
+      "killed": true,
+      "returncode": 1,
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_______________________ test_published_signature_example _______________________\n\nclient = <starlette.testclient.TestClient object at 0x1084541a0>\ndb_path = PosixPath('/private/var/folders/25/pg8bqm996wg0fmy68pbv0br40000gn/T/pytest-of-aaryan/pytest-10/test_published_signature_examp0/test.sqlite')\n\n    def test_published_signature_example(client, db_path):\n        assert signature(SIGNED_BODY) == SIGNED_DIGEST\n        response = client.post(\"/webhooks/notices\", content=SIGNED_BODY,\n                               headers={\"X-Signature\": SIGNED_DIGEST})\n>       assert response.status_code == 200\nE       assert 403 == 200\nE        +  where 403 = <Response [403 Forbidden]>.status_code\n\ntests/test_http.py:71: AssertionError\n=============================== warnings summary ===============================\n../../../../../../tmp/litigence-eval-venv/lib/python3.14/site-packages/fastapi/testclient.py:1\n  /private/tmp/litigence-eval-venv/lib/python3.14/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ============================\nFAILED tests/test_http.py::test_published_signature_example - assert 403 == 200\n1 failed, 1 warning in 0.09s\n",
+      "stderr": ""
+    },
+    {
+      "name": "cross-tenant-matter-lookup",
+      "test": "tests/test_validation.py::test_other_tenant_exclusive_matter_is_rejected",
+      "killed": true,
+      "returncode": 1,
+      "tests": 2,
+      "failures": 2,
+      "errors": 0,
+      "stdout": "FF                                                                       [100%]\n=================================== FAILURES ===================================\n____ test_other_tenant_exclusive_matter_is_rejected[alderbrook-law-M-4410] _____\n\nconn = <sqlite3.Connection object at 0x10c3532e0>, tenant = 'alderbrook-law'\nmatter = 'M-4410'\n\n    @pytest.mark.parametrize(\"tenant,matter\", [(ALDER, \"M-4410\"), (FERN, \"M-3109\")])\n    def test_other_tenant_exclusive_matter_is_rejected(conn, tenant, matter):\n>       assert check(dict(VALID, matter_id=matter), tenant, conn) == INVALID\nE       AssertionError: assert {'matter_id':...eview': False} == {'matter_id':...review': True}\nE         \nE         Differing items:\nE         {'filed_date': '2026-10-29'} != {'filed_date': None}\nE         {'matter_id': 'M-4410'} != {'matter_id': None}\nE         {'filing_type': 'order'} != {'filing_type': None}\nE         {'needs_review': False} != {'needs_review': True}\nE         Use -v to get more diff\n\ntests/test_validation.py:48: AssertionError\n_____ test_other_tenant_exclusive_matter_is_rejected[fernwick-llp-M-3109] ______\n\nconn = <sqlite3.Connection object at 0x10c353790>, tenant = 'fernwick-llp'\nmatter = 'M-3109'\n\n    @pytest.mark.parametrize(\"tenant,matter\", [(ALDER, \"M-4410\"), (FERN, \"M-3109\")])\n    def test_other_tenant_exclusive_matter_is_rejected(conn, tenant, matter):\n>       assert check(dict(VALID, matter_id=matter), tenant, conn) == INVALID\nE       AssertionError: assert {'matter_id':...eview': False} == {'matter_id':...review': True}\nE         \nE         Differing items:\nE         {'filed_date': '2026-10-29'} != {'filed_date': None}\nE         {'matter_id': 'M-3109'} != {'matter_id': None}\nE         {'filing_type': 'order'} != {'filing_type': None}\nE         {'needs_review': False} != {'needs_review': True}\nE         Use -v to get more diff\n\ntests/test_validation.py:48: AssertionError\n=============================== warnings summary ===============================\n../../../../../../tmp/litigence-eval-venv/lib/python3.14/site-packages/fastapi/testclient.py:1\n  /private/tmp/litigence-eval-venv/lib/python3.14/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ============================\nFAILED tests/test_validation.py::test_other_tenant_exclusive_matter_is_rejected[alderbrook-law-M-4410]\nFAILED tests/test_validation.py::test_other_tenant_exclusive_matter_is_rejected[fernwick-llp-M-3109]\n2 failed, 1 warning in 0.04s\n",
+      "stderr": ""
+    },
+    {
+      "name": "claim-already-processing-notice",
+      "test": "tests/test_concurrency.py::test_two_workers_extract_each_notice_exactly_once",
+      "killed": true,
+      "returncode": 1,
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n______________ test_two_workers_extract_each_notice_exactly_once _______________\n\ndb_path = PosixPath('/private/var/folders/25/pg8bqm996wg0fmy68pbv0br40000gn/T/pytest-of-aaryan/pytest-12/test_two_workers_extract_each_0/test.sqlite')\ntmp_path = PosixPath('/private/var/folders/25/pg8bqm996wg0fmy68pbv0br40000gn/T/pytest-of-aaryan/pytest-12/test_two_workers_extract_each_0')\n\n    def test_two_workers_extract_each_notice_exactly_once(db_path, tmp_path):\n        texts = [f\"synthetic-notice-{i}\" for i in range(18)]\n        for index, text in enumerate(texts):\n            insert_notice(db_path, f\"RACE-{index}\", text=text)\n        results = run_pair(\"worker\", db_path, tmp_path / \"worker-race\")\n        assert all(result[\"count\"] >= 1 for result in results), \"both workers must participate\"\n>       assert sum(result[\"count\"] for result in results) == len(texts)\nE       AssertionError: assert 19 == 18\nE        +  where 19 = sum(<generator object test_two_workers_extract_each_notice_exactly_once.<locals>.<genexpr> at 0x10bf5b2a0>)\nE        +  and   18 = len(['synthetic-notice-0', 'synthetic-notice-1', 'synthetic-notice-2', 'synthetic-notice-3', 'synthetic-notice-4', 'synthetic-notice-5', ...])\n\ntests/test_concurrency.py:66: AssertionError\n=============================== warnings summary ===============================\n../../../../../../tmp/litigence-eval-venv/lib/python3.14/site-packages/fastapi/testclient.py:1\n  /private/tmp/litigence-eval-venv/lib/python3.14/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ============================\nFAILED tests/test_concurrency.py::test_two_workers_extract_each_notice_exactly_once\n1 failed, 1 warning in 0.12s\n",
+      "stderr": ""
+    },
+    {
+      "name": "nontransactional-approval",
+      "test": "tests/test_http.py::test_approval_rolls_back_calendar_if_status_update_fails",
+      "killed": true,
+      "returncode": 1,
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n___________ test_approval_rolls_back_calendar_if_status_update_fails ___________\n\ndb_path = PosixPath('/private/var/folders/25/pg8bqm996wg0fmy68pbv0br40000gn/T/pytest-of-aaryan/pytest-13/test_approval_rolls_back_calen0/test.sqlite')\nconn = <sqlite3.Connection object at 0x10abd74c0>\n\n    def test_approval_rolls_back_calendar_if_status_update_fails(db_path, conn):\n        insert_notice(db_path, status=\"pending\", matter_id=\"M-3108\")\n        conn.execute(\"CREATE TRIGGER fail_docket BEFORE UPDATE ON notices \"\n                     \"WHEN NEW.status='docketed' BEGIN SELECT RAISE(ABORT, 'test fault'); END\")\n        with TestClient(create_app(str(db_path)), raise_server_exceptions=False) as client:\n            assert client.post(f\"/tenants/{ALDER}/notices/N-1/approve\").status_code == 500\n>       assert rows(db_path, \"calendar_entries\") == []\nE       AssertionError: assert [{'id': 1, 'n...M-3108', ...}] == []\nE         \nE         Left contains one more item: {'id': 1, 'notice_pk': 1, 'tenant_id': 'alderbrook-law', 'matter_id': 'M-3108', ...}\nE         Use -v to get more diff\n\ntests/test_http.py:153: AssertionError\n=============================== warnings summary ===============================\n../../../../../../tmp/litigence-eval-venv/lib/python3.14/site-packages/fastapi/testclient.py:1\n  /private/tmp/litigence-eval-venv/lib/python3.14/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ============================\nFAILED tests/test_http.py::test_approval_rolls_back_calendar_if_status_update_fails\n1 failed, 1 warning in 0.07s\n",
+      "stderr": ""
+    },
+    {
+      "name": "swallow-database-lookup-error",
+      "test": "tests/test_validation.py::test_database_lookup_error_propagates",
+      "killed": true,
+      "returncode": 1,
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "stdout": "F                                                                        [100%]\n=================================== FAILURES ===================================\n____________________ test_database_lookup_error_propagates _____________________\n\nconn = <sqlite3.Connection object at 0x10ab372e0>\n\n    def test_database_lookup_error_propagates(conn):\n        conn.execute(\"DROP TABLE matters\")\n>       with pytest.raises(sqlite3.Error):\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE       Failed: DID NOT RAISE Error\n\ntests/test_validation.py:69: Failed\n=============================== warnings summary ===============================\n../../../../../../tmp/litigence-eval-venv/lib/python3.14/site-packages/fastapi/testclient.py:1\n  /private/tmp/litigence-eval-venv/lib/python3.14/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ============================\nFAILED tests/test_validation.py::test_database_lookup_error_propagates - Fail...\n1 failed, 1 warning in 0.03s\n",
+      "stderr": ""
+    },
+    {
+      "name": "accept-impossible-calendar-date",
+      "test": "tests/test_worker.py::test_invalid_extraction_is_persisted_pending_with_all_fields_null",
+      "killed": true,
+      "returncode": 1,
+      "tests": 5,
+      "failures": 1,
+      "errors": 0,
+      "stdout": "...F.                                                                    [100%]\n=================================== FAILURES ===================================\n__ test_invalid_extraction_is_persisted_pending_with_all_fields_null[answer3] __\n\ndb_path = PosixPath('/private/var/folders/25/pg8bqm996wg0fmy68pbv0br40000gn/T/pytest-of-aaryan/pytest-15/test_invalid_extraction_is_per3/test.sqlite')\nanswer = {'matter_id': 'M-3108', 'filing_type': 'order', 'filed_date': '2026-02-30'}\n\n    @pytest.mark.parametrize(\"answer\", [None, {}, dict(VALID, matter_id=\"M-4410\"),\n                                        dict(VALID, filed_date=\"2026-02-30\"), dict(VALID, filing_type=\"appeal\")])\n    def test_invalid_extraction_is_persisted_pending_with_all_fields_null(db_path, answer):\n        insert_notice(db_path)\n        assert run_once(str(db_path), extractor=lambda text: answer) == 1\n        row = rows(db_path)[0]\n        assert row[\"status\"] == \"pending\"\n>       assert {key: row[key] for key in INVALID} == INVALID\nE       AssertionError: assert {'matter_id':...ds_review': 0} == {'matter_id':...review': True}\nE         \nE         Differing items:\nE         {'filed_date': '2026-02-30'} != {'filed_date': None}\nE         {'needs_review': 0} != {'needs_review': True}\nE         {'matter_id': 'M-3108'} != {'matter_id': None}\nE         {'filing_type': 'order'} != {'filing_type': None}\nE         Use -v to get more diff\n\ntests/test_worker.py:38: AssertionError\n=============================== warnings summary ===============================\n../../../../../../tmp/litigence-eval-venv/lib/python3.14/site-packages/fastapi/testclient.py:1\n  /private/tmp/litigence-eval-venv/lib/python3.14/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ============================\nFAILED tests/test_worker.py::test_invalid_extraction_is_persisted_pending_with_all_fields_null[answer3]\n1 failed, 4 passed, 1 warning in 0.06s\n",
+      "stderr": ""
+    }
+  ]
+}
