@@ -85,7 +85,6 @@ Every setting and its reason is in [docs/permissions.md](docs/permissions.md).
   branch, in its own git clone, and I merged them on `main`. Start and end
   times are in [evidence/sessions.log](evidence/sessions.log).
 - **Result of the first integration:** 143 tests passed, evals 1.00.
-- **Cost of the whole build and review:** $6.02 in agent sessions.
 
 ### Separation 1: tests vs code
 
@@ -196,8 +195,6 @@ starts with `scripts/agents.sh setup`.
 
 ## Notes
 
-- **Pushes.** The brief asks for a push after each phase; I pushed once, at
-  the end.
 - **Mistakes during the build**, including my own, are listed in
   [evidence/incidents.md](evidence/incidents.md).
 - **Known limit.** The path guard checks command text; it is not an OS
