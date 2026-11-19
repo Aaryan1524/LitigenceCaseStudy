@@ -9,6 +9,9 @@
 </div>
 
 <div align="center">
+  <img src="https://img.shields.io/badge/independent%20tests-160%20passing-brightgreen" alt="Independent tests: 160 passing">
+  <img src="https://img.shields.io/badge/independent%20evals-100%25-brightgreen" alt="Independent evals: 100%">
+  <img src="https://img.shields.io/badge/defect%20probes-7%2F7%20caught%20by%20both%20suites-2E7D32" alt="Defect probes: 7 of 7 caught by both suites">
   <img src="https://img.shields.io/badge/agents-5%20%2B%201%20no--tools%20call-6A5ACD" alt="Agents: 5 plus 1 no-tools call">
   <img src="https://img.shields.io/badge/every%20commit-role%20%2B%20session%20stamped-2E7D32" alt="Every commit stamped with role and session">
   <img src="https://img.shields.io/badge/separations-checked%20by%20content%20hash-0B7285" alt="Separations checked by content hash">
@@ -24,17 +27,48 @@ product is a multi-tenant docket service: signed webhooks, an extraction
 worker and a review API over one SQLite file. It is the ground the
 agents worked on.
 
-> [!IMPORTANT]
-> **The tests and evals have been removed from `main` on purpose**, so
-> they can be rewritten independently by a different AI with no anchoring
-> on the originals.
-> - **What remains:** the application code in `app/`, `worker/` and
->   `extractor/`, plus the full orchestration and evidence.
-> - **What the originals showed:** the agent-written suite (156 tests)
->   and the 20-notice eval set (1.00 on every field) are recorded in
->   `evidence/`.
-> - **Where the originals still live:** branches `feat/tests` and
->   `feat/evals-data`. The evals runner is on `feat/worker`.
+## Results: two suites that never saw each other
+
+The tests and evals on `main` were **written by a different AI**, not by
+the agents that built the system. It was given a code-only export of
+`main`: `app/`, `worker/`, `extractor/`, the contract and the brief, with
+no git history, no evidence and none of the original tests or eval
+labels. So the same model family never grades its own homework.
+
+| | Original suite (build agents) | Independent suite (different AI) |
+|---|---|---|
+| Who wrote it | the tests agent in this pipeline | a separate AI, outside the pipeline |
+| Saw the implementation | **no**: it could not read or run the code | yes: it read the code, by its own account |
+| Saw the other suite | no | no: it reports it did not retrieve the original tests or labels |
+| Tests on the same code | 156 passed | **160 passed** |
+| 20-notice evals | 1.00 on every field | **100% on every field, 100% exact match** |
+| Eval texts shared between the two sets | 0 | 0 |
+| Its own defect probes | 1 (an agent-made `DEMO:` commit) | 7 mutations, all detected |
+| **Catches the other side's 7 defects** | **7 / 7** | 7 / 7 |
+| Where it lives | branches `feat/tests`, `feat/evals-data` | `tests/`, `evals/`, `reports/` on `main` |
+
+Neither suite found an application defect. The cross-check is the
+strongest signal here: the suite written without ever seeing the code
+caught every defect the code-reading evaluator designed. Those include
+signing re-serialized JSON, cross-tenant matter lookup, reclaiming a
+claimed notice, a non-transactional approve, swallowed database errors
+and accepting impossible dates.
+
+Reproduce all of it:
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+.venv/bin/python scripts/run_checks.py       # 160 passed; evals 100%; app files match the evaluated hashes
+.venv/bin/python scripts/mutation_check.py   # 7/7 selected defects detected
+.venv/bin/python scripts/cross_check.py      # original suite on the same code + the 7 defects against it
+```
+
+Reports from the evaluator are in [reports/RESULTS.md](reports/RESULTS.md)
+and [reports/INDEPENDENT-EVAL.md](reports/INDEPENDENT-EVAL.md). The
+cross-check output is in [evidence/cross-check.json](evidence/cross-check.json).
+Both suites cover the synthetic contract only. They don't measure
+extraction quality on real court notices, sustained load or crash
+recovery.
 
 ## The approach in one picture
 
@@ -63,6 +97,7 @@ agents worked on.
 | Every agent reads the whole spec | **Context packs**: `scripts/packs.py` gives each agent one file with its task, its plan and only the contract sections it needs |
 | "Don't look at the evals" written in `CLAUDE.md` | **Agents that must stay blind cannot execute code.** evals-data is one LLM call with `--tools ""` (1 turn, 0 tool calls). The tests agent has no python or pytest. The order is enforced by script |
 | Agent says "done" | **A Stop hook decides "done"**: clean tree, every committed file inside the agent's slice, modules import. Contract and merge commits are excluded so agents are not blamed for the architect's work |
+| The same AI writes the code and the tests that grade it | **Three independent sources**: build agents wrote the code; a tests agent blind to the code wrote one suite; a different AI wrote a second suite and the evals without seeing the first. The two suites are cross-checked against each other's defects |
 | "Trust me, nobody peeked" | **Proof from git's content hashes**: the audit checks that the forbidden files' blobs never entered a clone's object store, with negative controls showing the check can fail |
 | Logs, if any | **Hash-chained logs** of every tool call, allowed or denied. Editing or deleting a line breaks the chain, and the audit shows it does |
 | Who wrote this line? | **Every agent commit is stamped** `Agent-Role` and `Agent-Session` by a git hook the agent cannot reach. One session id links transcript, logs, commits and timeline |
@@ -204,9 +239,14 @@ LitigenceAI/
 ├── scripts/
 │   ├── agents.sh               orchestrator (setup run resume evals-call amend sync collect audit)
 │   ├── packs.py                builds context/<role>.md from contract sections
-│   └── audit.py                writes evidence/audit.md
+│   ├── audit.py                writes evidence/audit.md
+│   ├── run_checks.py           independent tests + evals + hash check   (independent evaluator)
+│   ├── mutation_check.py       7 deliberate defects in disposable copies (independent evaluator)
+│   └── cross_check.py          both suites on the same code, and the 7 defects against the original
 ├── app/  worker/  extractor/   the application, written by the api, worker and extract agents
-└── evidence/                   audit, incidents, logs, transcripts, clone bundles
+├── tests/  evals/              the independent suite and eval set (a different AI)
+├── reports/                    the independent evaluator's results, hashes and environment
+└── evidence/                   audit, incidents, logs, transcripts, clone bundles, cross-check
 ```
 
 ## Try it
@@ -264,8 +304,9 @@ python3 -c "import sys,glob; sys.path.insert(0,'.claude/hooks'); import chainlog
 - **Orchestration upgrade:** 18:03.
 - **Phases 2 and 3, run by the agents:** 18:03 to 18:20, finished after
   the live hour at the interviewer's invitation.
-- **Tests and evals removed from `main`:** in the last commit, for
-  independent re-evaluation.
+- **Original tests and evals moved off `main`**, so a different AI could
+  write an independent suite. The independent suite and evals are now on
+  `main`; the originals remain on `feat/tests` and `feat/evals-data`.
 - **Push:** once, at the end, not after each phase.
 
 ## Architecture history
@@ -285,3 +326,7 @@ python3 -c "import sys,glob; sys.path.insert(0,'.claude/hooks'); import chainlog
 7. **Plain logs → hash-chained logs, and an audit with negative
    controls.** The evidence can be checked, and the checks are shown to
    fail when they should.
+8. **One test suite → two independent suites, cross-checked.** A
+   different AI wrote the tests and evals on `main` from a code-only
+   export. Each suite was then run against the other side's deliberate
+   defects.

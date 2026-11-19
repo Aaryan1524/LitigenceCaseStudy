@@ -1,0 +1,42 @@
+{
+  "code_revision": "97e1ccd938caf91a5896999cf9273e52f81ae398",
+  "original_suite_on_code": "156 passed, 1 warning in 1.31s",
+  "independent_suite_on_code": "160 passed, 1 warning in 1.41s",
+  "independent_mutations_vs_original_suite": [
+    {
+      "mutation": "signature-bypass",
+      "original_suite": "8 failed, 148 passed, 1 warning in 1.24s",
+      "detected": true
+    },
+    {
+      "mutation": "sign-reserialized-json",
+      "original_suite": "7 failed, 149 passed, 1 warning in 1.21s",
+      "detected": true
+    },
+    {
+      "mutation": "cross-tenant-matter-lookup",
+      "original_suite": "6 failed, 150 passed, 1 warning in 1.21s",
+      "detected": true
+    },
+    {
+      "mutation": "claim-already-processing-notice",
+      "original_suite": "3 failed, 153 passed, 1 warning in 1.65s",
+      "detected": true
+    },
+    {
+      "mutation": "nontransactional-approval",
+      "original_suite": "18 failed, 138 passed, 1 warning in 1.20s",
+      "detected": true
+    },
+    {
+      "mutation": "swallow-database-lookup-error",
+      "original_suite": "7 failed, 149 passed, 1 warning in 1.33s",
+      "detected": true
+    },
+    {
+      "mutation": "accept-impossible-calendar-date",
+      "original_suite": "19 failed, 137 passed, 1 warning in 1.26s",
+      "detected": true
+    }
+  ]
+}
