@@ -1,202 +1,161 @@
 # Litigence Parallel Filings
 
-My submission for the Litigence exercise in
-[parallel-filings-brief.md](parallel-filings-brief.md): direct several coding
-agents at once to build a multi-tenant docket service. The brief judges the
-setup and how the agents are directed and checked, so this README follows
-the brief's own phases. Every row links to the evidence.
+A multi-tenant docket service, built by several coding agents working in
+parallel: signed court-filing webhooks, an extraction worker and a review
+API over one SQLite database. I directed the agents and checked their
+work. This README explains how I ran it and how I evaluated what they
+produced.
 
-## Scorecard against the brief
+## How I approached it
 
-| The brief asks for | Status | Where |
+I treated the agents like a contractor team I couldn't fully trust:
+
+1. Agree the spec in writing before any code exists.
+2. Give each agent only what it needs to do its job.
+3. Let machines, not the agents, decide when work is done.
+4. Have every piece checked by someone other than its author.
+5. Keep a record good enough to prove all of this afterwards.
+
+## Setup
+
+- **One contract.** [docs/contract.md](docs/contract.md) fixes the schema,
+  the statuses, the function signatures and the response for every HTTP
+  case. Agents build against it, never against each other's code.
+- **One file per role.** [.claude/agents/](.claude/agents/) sets each
+  agent's model, tools and a short prompt.
+  [tasks/](tasks/) and [plans/](plans/) give each agent its job, an
+  acceptance check and the steps to get there.
+- **Small context.** [scripts/packs.py](scripts/packs.py) builds one file
+  per agent ([context/](context/)), with only the parts of the contract
+  that agent uses. Most are 600 to 1,000 words.
+- **Isolation.** Each agent runs as its own session in its own git clone,
+  on its own branch, with only its own files on disk. It has no network
+  tools, no access to the contract or hooks, and nothing outside its
+  folder. Each setting and the reason for it is in
+  [docs/permissions.md](docs/permissions.md).
+- **Rules enforced by code.**
+  - A hook ([path_guard.py](.claude/hooks/path_guard.py)) checks every file
+    and command an agent tries to use.
+  - A stop hook ([gate.py](.claude/hooks/gate.py)) won't let an agent
+    finish with uncommitted work, files outside its slice, or code that
+    doesn't import.
+
+Before any build work, I tested the guard with real agent sessions trying
+to break out ([evidence/phase1-guard-test.md](evidence/phase1-guard-test.md)).
+
+## Running the agents
+
+| Agent | Built | Model |
 |---|---|---|
-| Instruction files | Done | [CLAUDE.md](CLAUDE.md), [.claude/agents/](.claude/agents/) |
-| A shared contract (schema, statuses, interfaces) | Done | [docs/contract.md](docs/contract.md) |
-| One task per agent, each with an acceptance check | Done | [tasks/](tasks/), [plans/](plans/) |
-| At least one rule enforced by a hook, test or script | Done: 2 hooks, 1 test, 1 script | [Phase 1](#phase-1-setup) |
-| Permission settings and why | Done | [docs/permissions.md](docs/permissions.md) |
-| 2+ agents at the same time, each on its own branch, integrated on `main` | 3 at once, 5 in all, each on a `feat/<role>` branch | [Phase 2](#phase-2-build) |
-| Tests written by a different agent, from the brief and contract | Done, and shown | [Separation 1](#separation-1-tests-vs-code) |
-| `extract` and `evals/notices.jsonl` authors never see each other's files | Done, and shown | [Separation 2](#separation-2-extract-vs-eval-data) |
-| Handle a requirement change partway through | 3 contract amendments, pushed to agents | [Changes](#requirement-changes) |
-| Review by an agent that did not write the code; decide on up to 2 findings | 5 findings: 2 fixed, 3 deferred | [Phase 3](#phase-3-review) |
-| One test failing when its protection is removed | Done: 7 failures | [Phase 3](#phase-3-review) |
-| One integrated path and one safety test running | Both suites pass on `main` | [Run it](#run-it) |
-| What breaks first in production | Answered | [Production](#what-breaks-first-in-production) |
+| api | intake webhook, review API, database | Opus |
+| worker | extraction loop and answer checking | Opus |
+| extract | the text parser | Haiku |
+| tests | the test suite, from the contract only | Opus |
+| evals-data | 20 labelled sample notices | one model call, no tools |
+| reviewer | read the finished code | Opus |
 
-## Phase 1: setup
+extract, api and tests started together. The worker started automatically
+when api committed "db ready". The eval data was written only after
+extract had finished. I merged each agent's branch into `main` as it
+landed ([docs/runbook.md](docs/runbook.md) has the exact commands).
 
-**Instruction files.**
-- [CLAUDE.md](CLAUDE.md) holds the rules every agent loads.
-- Each role is defined in [.claude/agents/](.claude/agents/), with its own
-  model, tools and a short prompt.
+## How I evaluated the work
 
-**Contract.** [docs/contract.md](docs/contract.md) is the single source of
-truth:
-- tables and keys, including uniqueness constraints enforced by the
-  database;
-- status values, including a `processing` claim status that I added;
-- exact function signatures, including where the extractor is injected;
-- an HTTP table giving the response for every case, in check order.
+**1. Per-agent checks.** Each agent had to pass its own acceptance check
+and the stop hook before it could finish. For example, the worker had to
+show that two workers racing over 200 notices processed each one exactly
+once.
 
-**Tasks.** Each agent has a task file in [tasks/](tasks/), with an
-acceptance check, and a step-by-step plan in [plans/](plans/).
-[scripts/packs.py](scripts/packs.py) merges the task, the plan and only the
-contract sections that role needs into one file per agent, in
-[context/](context/). Each file is 600 to 1,000 words.
+**2. Tests from an agent that couldn't see the code.** The tests agent
+wrote 143 tests from the contract alone. It had no copy of the code and no
+way to run anything; I ran its tests and sent back only pass/fail results.
+All 143 passed on the first integration.
 
-**Rules enforced mechanically, not by prose:**
-- [.claude/hooks/path_guard.py](.claude/hooks/path_guard.py) runs before
-  every tool call. It allows only the files and commands in the role's
-  allowlist, and logs every call to a hash-chained log.
-- [.claude/hooks/gate.py](.claude/hooks/gate.py) is a Stop hook. An agent
-  cannot finish with uncommitted work, files outside its slice, or modules
-  that fail to import.
-- A test fails if anything under `app/` imports the extractor or worker,
-  because intake must never call the extractor.
-- [scripts/agents.sh](scripts/agents.sh) enforces run order: the extract
-  agent refuses to start if eval data exists anywhere on disk.
+**3. Evals.** 20 labelled notices ran through the same checking code the
+worker uses. They include a matter that belongs to the other firm, an
+impossible date and a notice that tries to inject instructions. The result
+was 1.00 on every field.
 
-I tested the guard in real agent sessions before the build: 17 probes,
-each blocked or allowed as designed
-([evidence/phase1-guard-test.md](evidence/phase1-guard-test.md)).
+**4. A fresh reviewer.** A reviewer agent that had written nothing read the
+integrated code and raised 5 findings. I had the owning agents fix the two
+that mattered: a database error was being saved as an invalid answer,
+silently losing data, and a bad signature header returned 500 instead of
+403. I deferred the other three, with reasons
+([evidence/phase3-review.md](evidence/phase3-review.md)).
 
-**Permissions.** Each agent:
-- works only in its own clone;
-- has no network tools, no MCP connectors, no subagents and no pip;
-- cannot touch the contract, the hooks or `.git`;
-- runs headless, so anything not explicitly allowed is denied.
+**5. Breaking a protection on purpose.** I had an agent remove the
+raw-bytes signature check. 7 tests failed, including the brief's own
+signed example. Its revert brought everything back to green
+([evidence/phase3-demo.md](evidence/phase3-demo.md)).
 
-Every setting and its reason is in [docs/permissions.md](docs/permissions.md).
+**6. A second, independent test suite.** I moved the original tests aside
+and had Codex write a new suite and eval set. It saw the code and contract
+but none of the original tests or labels. Then I ran each suite against
+the other's deliberate defects:
 
-## Phase 2: build
-
-| Agent | Built | Model | How I checked it |
-|---|---|---|---|
-| api | intake, approve, list, database | Opus | its acceptance check, Stop gate, then the tests |
-| worker | claim loop, `check()`, evals runner | Opus | two-worker race script (200 notices, counts sum exactly), Stop gate, tests |
-| extract | `extract(text)` | Haiku | acceptance check on the brief's example, Stop gate |
-| tests | the test suite | Opus | collection check run by me; it cannot run code |
-| evals-data | 20 labelled notices | one LLM call, no tools | format check by script |
-
-- **Parallelism and branches.** extract, api and tests ran at the same time.
-  The worker started automatically when api committed
-  `CHECKPOINT: db ready`. Each agent worked on its own `feat/<role>`
-  branch, in its own git clone, and I merged them on `main`. Start and end
-  times are in [evidence/sessions.log](evidence/sessions.log).
-- **Result of the first integration:** 143 tests passed, evals 1.00.
-
-### Separation 1: tests vs code
-
-- **How it was enforced:**
-  - The tests agent's clone never contained `app/`, `worker/` or
-    `extractor/`.
-  - It had no `python` or `pytest`, so it could not run code.
-  - I ran its tests and sent back only test names and one-line messages.
-- **How I know it held:**
-  - Its guard log shows every file it read.
-  - The audit checks that it read nothing it hadn't written.
-  - Every commit is stamped with its role and session.
-
-One gap: a later merge of mine put three code files into its git history.
-They were never on disk, and the agent made no call that could read them.
-The audit still flags it ([incident 4](evidence/incidents.md)).
-
-### Separation 2: extract vs eval data
-
-- **How it was enforced:**
-  - The eval data was written by a single LLM call with no tools at all,
-    from an empty folder. It took 1 turn, with no tool calls.
-  - The script made extract finish before the eval data existed anywhere
-    on disk, and froze extract afterwards.
-- **How I know it held:**
-  - [evidence/audit.md](evidence/audit.md) checks git's content hashes: the
-    eval file never entered extract's git store, and the extractor never
-    entered the eval-data clone's.
-  - The session log shows the order.
-  - Every audit check has a negative test showing it can fail.
-
-You can rerun the extract check yourself from the clone bundle in
-[evidence/clones/](evidence/clones/).
-
-### Requirement changes
-
-Changes went through a `contract` branch that never carries code. I
-regenerated the context files, merged the branch into the affected agents'
-clones, and resumed them. This happened three times:
-
-1. **Seed data.** The api agent found the seed data missing from its
-   context file. It stopped instead of inventing it, and I added the
-   fixtures to the contract.
-2. **Database errors.** After review, the contract changed so a database
-   error is never stored as an invalid answer.
-3. **Signature header.** Also after review, a non-ASCII signature header is
-   now a 403.
-
-Each change is in the change log at the end of
-[docs/contract.md](docs/contract.md).
-
-## Phase 3: review
-
-A fresh reviewer agent read `main` from its own read-only clone. It found 5
-issues; I acted on two
-([evidence/phase3-review.md](evidence/phase3-review.md)):
-
-| Finding | Decision |
-|---|---|
-| A database error during matter lookup was saved as an invalid answer, silently losing a correct extraction | **Fixed** by the worker agent, with new tests from the tests agent |
-| A non-ASCII signature header returned 500, not 403 | **Fixed** by the api agent |
-| Malformed but signed bodies return 500 (2 findings) | Deferred: real, but it needs a malformed vendor payload |
-| Blocking SQLite inside an async handler | Deferred: a latency issue, listed under production |
-
-**Protection removed, test fails.** I had the api agent compute the
-signature over re-serialized JSON instead of the raw bytes. 7 tests failed,
-including the brief's own signed example. The agent's revert restored a full
-pass ([evidence/phase3-demo.md](evidence/phase3-demo.md)).
-
-## Independent second suite
-
-After the build, I moved the pipeline's tests off `main`. I had Codex write
-a second suite and eval set from an export of the code and the contract,
-with no access to the first suite or its labels. That suite is what's on
-`main` now.
-
-| | Pipeline suite (`feat/tests`) | Codex suite (`main`) |
+| | Original suite | Codex suite (on `main`) |
 |---|---|---|
 | Tests | 156 passed | 160 passed |
 | Evals | 1.00 per field | 100% per field |
 | Catches the other's 7 deliberate defects | 7 / 7 | 7 / 7 |
 
+**7. Proof of who did what.**
+- Every commit is stamped with the agent's role and session by a git hook
+  the agents couldn't reach.
+- Every tool call went to a log in which each line is chained to the
+  previous one by hash.
+- [scripts/audit.py](scripts/audit.py) checks that no agent's git history
+  ever held files it wasn't allowed to see. Each check has a negative test
+  that shows it can fail.
+
+Results: [evidence/audit.md](evidence/audit.md).
+
+## Keeping agents apart
+
+Two pairs had to stay blind to each other.
+
+- **Tests and code.** The tests agent's folder never contained the code,
+  and it could not run anything. Its log shows every file it read.
+- **The parser and the eval data.**
+  - The eval data came from a single model call with no tools at all.
+  - A script made sure the parser was finished before the eval data
+    existed anywhere on disk.
+  - The audit confirms neither side's files entered the other's git
+    history.
+
+## When things changed or went wrong
+
+- **The spec changed three times.** Each change went into the contract
+  first, then to the affected agents. One came from an agent: it found
+  seed data missing from its context and stopped to ask, instead of
+  inventing it. The change log is at the end of
+  [docs/contract.md](docs/contract.md).
+- **I made mistakes too.** My stop hook once blamed an agent for files I
+  had merged in, and one of my merges let code into the tests agent's git
+  history. It was never on disk and the agent couldn't run it, but the
+  audit still flags it. Each mistake, and what it changed, is in
+  [evidence/incidents.md](evidence/incidents.md).
+- **The guard is not a full sandbox.** It checks commands as text, so the
+  separations don't rely on it. They rely on the blind agents having no
+  way to run code.
+
+## What I'd expect to break first in production
+
+1. SQLite under concurrent writes. Blocking database calls inside async
+   handlers stall every request.
+2. Notices stuck mid-processing after a worker crash, with nothing to
+   recover them.
+3. Malformed but validly signed requests return 500, so the vendor retries
+   forever.
+4. One plaintext secret per firm, no replay protection and no key
+   rotation.
+5. The regex parser on real court notices.
+
 ## Run it
 
 ```bash
 pip install -r requirements.txt
-python scripts/run_checks.py      # tests (incl. end-to-end: signed webhook → worker → approve → list), evals, hashes
-python scripts/mutation_check.py  # 7 deliberate defects, each must make a test fail
-python scripts/cross_check.py     # the pipeline suite on the same code and the same 7 defects
+python scripts/run_checks.py      # tests (including signed webhook → worker → approve → list) and evals
+python scripts/mutation_check.py  # 7 deliberate defects, each must be caught
+python scripts/cross_check.py     # the original suite against the same code and defects
 ```
-
-The orchestration commands are in [docs/runbook.md](docs/runbook.md). It
-starts with `scripts/agents.sh setup`.
-
-## What breaks first in production
-
-1. **SQLite write contention.** There is one writer at a time, and blocking
-   database calls run inside async handlers, so a held lock stalls every
-   request.
-2. **Notices stuck in `processing`.** A crashed worker leaves them claimed,
-   and nothing reclaims them.
-3. **Malformed but signed bodies return 500**, and the vendor retries
-   forever.
-4. **Secrets.** There is one plaintext secret per tenant, no replay
-   protection and no key rotation.
-5. **Extraction on real notices.** The regex extractor fits the synthetic
-   format only.
-
-## Notes
-
-- **Mistakes during the build**, including my own, are listed in
-  [evidence/incidents.md](evidence/incidents.md).
-- **Known limit.** The path guard checks command text; it is not an OS
-  sandbox. The two separations rely on blind roles being unable to run
-  code, not on the guard ([docs/permissions.md](docs/permissions.md)).
